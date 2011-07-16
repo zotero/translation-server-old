@@ -26,6 +26,7 @@
 const SERVER_FORMATS = {
 	"bibtex":"9cb70025-a888-4a29-a210-93ec52da40d4",
 	"bookmarks":"4e7119e0-02be-4848-86ef-79a64185aad8",
+	"mods":"0e2235e7-babf-413c-9acf-f27cce5f059c",
 	"refer":"881f60f2-0802-411a-9228-ce5f47b64c7d",
 	"rdf_bibliontology":"14763d25-8ba0-45df-8f52-b8d1108e7ac9",
 	"rdf_dc":"6e372642-ed9d-4934-b5d1-c11ac758ebb7",
@@ -37,6 +38,7 @@ const SERVER_FORMATS = {
 const SERVER_CONTENT_TYPES = {
 	"bibtex":"application/x-bibtex",
 	"bookmarks":"text/html",
+	"mods":"application/mods+xml",
 	"refer":"application/x-research-info-systems",
 	"rdf_bibliontology":"application/rdf+xml",
 	"rdf_dc":"application/rdf+xml",
