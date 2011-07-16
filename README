@@ -1,0 +1,3 @@
+A XULRunner-based approach to Zotero server side translation.
+
+Currently supports import and export translation. Theoretically supports both OS X and Linux builds, but hasn't been tested to build for Linux yet.
