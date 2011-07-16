@@ -60,6 +60,14 @@ Zotero.Server.Translation = new function() {
 		Zotero.debug(Zotero.Prefs.get("translatorsDirectory"));
 		translatorsDir.initWithPath(Zotero.Prefs.get("translatorsDirectory"));
 		
+		if(!translatorsDir.exists()) {
+			dump("Translators directory "+Zotero.Prefs.get("translatorsDirectory")+" does not "+
+				"exist. Please set this correctly in config.js.\n");
+			Components.classes['@mozilla.org/toolkit/app-startup;1']
+				.getService(Components.interfaces.nsIAppStartup)
+				.quit(Components.interfaces.nsIAppStartup.eAttemptQuit);
+		}
+		
 		var translators = [];
 		var files = translatorsDir.directoryEntries;
 		while(files.hasMoreElements()) {

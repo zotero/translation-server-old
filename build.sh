@@ -1,7 +1,7 @@
 #!/bin/bash
 CWD="`pwd`"
 EXTENSIONDIR="$CWD/../zotero/extension/trunk"
-XULRUNNERDIR="$CWD/../zotero/standalone/trunk/xulrunner/XUL.framework"
+XULRUNNERDIR="/Library/Frameworks/XUL.framework"
 
 XPCOMDIR="$EXTENSIONDIR/chrome/content/zotero/xpcom"
 BUILDDIR="$CWD/build"
@@ -81,3 +81,7 @@ perl -pi -e 's/pref\("extensions\.zotero\.debug\.log",\s*false\);//g' "$RESDIR/d
 perl -pi -e 's/pref\("extensions\.zotero\.debug\.level",[^\)]*\);//g' "$RESDIR/defaults/preferences/zotero.js"
 perl -pi -e 's/pref\("extensions\.zotero\.debug\.time",[^\)]*\);//g' "$RESDIR/defaults/preferences/zotero.js"
 perl -pi -e 's/extensions.zotero/translation-server/g' "$RESDIR/defaults/preferences/zotero.js"
+
+find "$BUILDDIR" -depth -type d -name .svn -exec rm -rf {} \;
+find "$BUILDDIR" -name .DS_Store -exec rm -rf \;
+find "$BUILDDIR" -name '._*' -exec rm -rf \;
