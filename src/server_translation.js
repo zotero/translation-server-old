@@ -59,7 +59,6 @@ Zotero.Server.Translation = new function() {
 	this.init = function() {
 		var translatorsDir = Components.classes["@mozilla.org/file/local;1"].
 			createInstance(Components.interfaces.nsILocalFile);
-		Zotero.debug(Zotero.Prefs.get("translatorsDirectory"));
 		translatorsDir.initWithPath(Zotero.Prefs.get("translatorsDirectory"));
 		
 		if(!translatorsDir.exists()) {
@@ -215,5 +214,39 @@ Zotero.Server.Translation.Export.prototype = {
 			}
 		});
 		translate.translate();
+	}
+};
+
+/**
+ * Refreshes the translator directory
+ *
+ * Accepts:
+ *		Nothing
+ * Returns:
+ *		Success or failure, depending upon git exit status
+ */
+Zotero.Server.Translation.Refresh = function() {};
+Zotero.Server.Endpoints["/refresh"] = Zotero.Server.Translation.Refresh;
+Zotero.Server.Translation.Refresh.prototype = {
+	"supportedMethods":["GET"],
+	
+	"init":function(data, sendResponseCallback) {
+		var bash = Components.classes["@mozilla.org/file/local;1"].
+			createInstance(Components.interfaces.nsILocalFile);
+		bash.initWithPath("/bin/bash");
+		
+		var proc = Components.classes["@mozilla.org/process/util;1"].
+			createInstance(Components.interfaces.nsIProcess);
+		proc.init(bash);
+		
+		var translatorsDir = "'"+Zotero.Prefs.get("translatorsDirectory").replace("'", "'\\''", "g")+"'";
+		var args = ["-c", "cd "+translatorsDir+" && git pull"];
+		proc.runAsync(args, args.length, {"observe":function(subject, topic) {
+			if(topic === "process-finished" && proc.exitValue === 0) {
+				sendResponseCallback(200, "text/plain", "Translator update completed successfully.");
+			} else {
+				sendResponseCallback(500, "text/plain", "An error occurred updating translators.");
+			}
+		}});
 	}
 };
