@@ -1,7 +1,7 @@
 /*
     ***** BEGIN LICENSE BLOCK *****
     
-    Copyright © 2009 Center for History and New Media
+    Copyright © 2011 Center for History and New Media
                      George Mason University, Fairfax, Virginia, USA
                      http://zotero.org
     
@@ -23,6 +23,10 @@
     ***** END LICENSE BLOCK *****
 */
 
+// Timeout for select request, in seconds
+const SERVER_SELECT_TIMEOUT = 120;
+
+// Format identifiers for export translation
 const SERVER_FORMATS = {
 	"bibtex":"9cb70025-a888-4a29-a210-93ec52da40d4",
 	"bookmarks":"4e7119e0-02be-4848-86ef-79a64185aad8",
@@ -35,6 +39,7 @@ const SERVER_FORMATS = {
 	"wikipedia":"3f50aaac-7acc-4350-acd0-59cb77faf620"
 };
 
+// Content types for export translation
 const SERVER_CONTENT_TYPES = {
 	"bibtex":"application/x-bibtex",
 	"bookmarks":"text/html",
@@ -47,11 +52,14 @@ const SERVER_CONTENT_TYPES = {
 	"wikipedia":"text/x-wiki"
 };
 
+Components.utils.import("resource://gre/modules/Services.jsm");
+
 /**
  * @namespace
  */
 Zotero.Server.Translation = new function() {
 	const infoRe = /^\s*{[\S\s]*?}\s*?[\r\n]/;
+	this.waitingForSelection = {};
 	
 	/**
 	 * Initializes translation server by reading files from local translators directory
@@ -115,9 +123,191 @@ Zotero.Server.Translation = new function() {
 };
 
 /**
+ * Translates a web page
+ *
+ * Accepts (as POST data):
+ *		url - a URL to translate
+ *		pkey - a persistent key referring to a previous translation attempt
+ *		items - 
+ * Returns:
+ *		Items in an alternative format
+ */
+Zotero.Server.Translation.Web = function() {};
+Zotero.Server.Endpoints["/web"] = Zotero.Server.Translation.Web;
+Zotero.Server.Translation.Web.prototype = {
+	"supportedMethods":["POST"],
+	"supportedDataTypes":["application/json"],
+	
+	"init":function(data, sendResponseCallback) {
+		if(!data.url) {
+			sendResponseCallback(400, "text/plain", "No URL specified\n");
+			return;
+		}
+		
+		if(!data.sessionid) {
+			sendResponseCallback(400, "text/plain", "No sessionid specified\n");
+			return;
+		}
+		
+		try {
+			var url = Services.io.newURI(data.url, "UTF-8", null);
+		} catch(e) {}
+		
+		if(!url || (!url.schemeIs("http") && !url.schemeIs("https"))) {
+			sendResponseCallback(400, "text/plain", "Invalid URL specified\n");
+			return;
+		}
+		
+		var runningInstance
+		if((runningInstance = Zotero.Server.Translation.waitingForSelection[data.sessionid])
+				&& data.items) {
+			// Already waiting for a items response, so just pass this there
+			runningInstance.sendResponse = sendResponseCallback
+			runningInstance.selectDone(data.items);
+		} else {
+			// New request
+			this.sendResponse = sendResponseCallback;
+			this._data = data;
+			this._browser = Zotero.Browser.createHiddenBrowser();
+			
+			var translate = this._translate = new Zotero.Translate.Web();
+			translate.setHandler("translators", this.translators.bind(this));
+			translate.setHandler("select", this.select.bind(this));
+			translate.setHandler("done", this.done.bind(this));
+			
+			var pageShowCalled = false;
+			var me = this;
+			//translate.setCookieManager(new Zotero.Server.Translation.CookieManager(this._browser, url));
+			this._browser.addEventListener("DOMContentLoaded", function() {
+				try {
+					if(me._browser.contentDocument.location.href === "about:blank") return;
+					if(pageShowCalled) return;
+					pageShowCalled = true;
+					
+					// get translators
+					translate.setDocument(me._browser.contentDocument);
+					translate.getTranslators();
+				} catch(e) {
+					Zotero.debug(e);
+					throw e;
+				}
+			}, false);
+			
+			this._browser.loadURI(url.spec);
+		}
+		
+		// 10% chance of GC
+		if(Math.random() < 0.1) {
+			for each(var instance in Zotero.Server.Translation.waitingForSelection) {
+				instance.collect();
+			}
+		}
+	},
+	
+	/**
+	 * Called to abort the request
+	 */
+	"collect":function(force) {
+		if(!force && Date.now() < this._responseTime+SERVER_SELECT_TIMEOUT*1000) return;
+		
+		if(this._browser) Zotero.Browser.deleteHiddenBrowser(this._browser);
+		delete Zotero.Server.Translation.waitingForSelection[this._data.sessionid];
+	},
+	
+	/**
+	 * Called when translators are available
+	 */
+	"translators":function(translate, translators) {
+		if(!translators.length) {
+			// XXX better status code?
+			Zotero.Browser.deleteHiddenBrowser(this._browser);
+			this.sendResponse(400, "text/plain", "No translators available\n");
+			return;
+		}
+		
+		translate.setTranslator(translators[0]);
+		translate.translate(false);
+	},
+	
+	/**
+	 * Called if multiple items are available for selection
+	 */
+	"select":function(translate, itemList, callback) {
+		this._selectCallback = callback;
+		this._itemList = itemList;
+		
+		if(this._data.items) {	// Items passed in request
+			this.selectDone(this._data.items);
+		} else {				// Items needed for response
+			// Fix for translators that don't create item lists as objects
+			if(itemList.push && typeof itemList.push === "function") {
+				var newItemList = {};
+				for(var item in itemList) {
+					newItemList[item] = itemList[item];
+				}
+				itemList = newItemList;
+			}
+			
+			// Send "Multiple Choices" HTTP response
+			this.sendResponse(300, "application/json", JSON.stringify(itemList));
+			
+			this._responseTime = Date.now();
+			Zotero.Server.Translation.waitingForSelection[this._data.sessionid] = this;
+		}
+	},
+	
+	/**
+	 * Called when items have been selected
+	 */
+	"selectDone":function(selectItems) {
+		// Make sure items are actually available
+		var haveItems = false;
+		for(var i in selectItems) {
+			if(this._itemList[i] === undefined || this._itemList[i] !== selectItems[i]) {
+				Zotero.Browser.deleteHiddenBrowser(this._browser);
+				this.sendResponse(412, "text/plain", "Items specified do not match items available\n");
+				return;
+			}
+			haveItems = true;
+		}
+		
+		// Make sure at least one item was specified
+		if(!haveItems) {
+			Zotero.Browser.deleteHiddenBrowser(this._browser);
+			this.sendResponse(400, "text/plain", "No items specified\n");
+			return;
+		}
+		
+		// Run select callback
+		this._selectCallback(selectItems);
+	},
+	
+	/**
+	 * Called on translation completion
+	 */
+	"done":function(translate, status) {
+		this.collect(true);
+		
+		if(!status) {
+			this.sendResponse(500, "text/plain", "An error occurred during translation. Please check translation with Zotero client.\n");
+		} else if(!translate.newItems) {
+			this.sendResponse(400, "text/plain", "Invalid input provided.\n");
+		} else {
+			var n = translate.newItems.length;
+			var items = new Array(n);
+			for(var i=0; i<n; i++) {
+				items[i] = Zotero.Utilities.itemToServerJSON(translate.newItems[i]);
+			}
+			
+			this.sendResponse(200, "application/json", JSON.stringify(items));
+		}
+	}
+};
+
+/**
  * Converts input in any format Zotero can import to items in Zotero server JSON format
  *
- * Accepts:
+ * Accepts (as raw POST data):
  *		File to import
  * Returns:
  *		Items in Zotero server JSON format
@@ -137,47 +327,21 @@ Zotero.Server.Translation.Import.prototype = {
 		var translate = new Zotero.Translate.Import();
 		translate.noWait = true;
 		translate.setString(data);
-		this._prepareSave(translate, sendResponseCallback);
+		this.sendResponse = sendResponseCallback;
+		
+		translate.setHandler("translators", this.translators.bind());
+		translate.setHandler("done", this.done.bind());
+		translate.getTranslators();
 	},
 	
-	/**
-	 * Sets handlers and initiates a save (web or import) operation
-	 */
-	"_prepareSave":function(translate, sendResponseCallback, raw) {
-		translate.setHandler("translators", function(obj, translators) {
-			if(!translators.length) {
-				sendResponseCallback(400, "text/plain", "No translator found for input\n");
-				return;
-			}
-			
-			translate.setTranslator(translators[0]);
-			translate.translate(false);
-		});
-		
-		translate.setHandler("done", function(translate, status) {
-			if(!status) {
-				sendResponseCallback(500, "text/plain", "An error occurred during translation. Please check translation with Zotero client.\n");
-			} else if(!translate.newItems) {
-				sendResponseCallback(400, "text/plain", "Invalid input provided.\n");
-			} else {
-				var n = translate.newItems.length;
-				var items = new Array(n);
-				for(var i=0; i<n; i++) {
-					items[i] = Zotero.Utilities.itemToServerJSON(translate.newItems[i]);
-				}
-				
-				sendResponseCallback(200, "application/json", JSON.stringify(items));
-			}
-		});
-		
-		translate.getTranslators();
-	}
+	"translators":Zotero.Server.Translation.Web.translators,
+	"done":Zotero.Server.Translation.Web.done
 };
 
 /**
  * Converts input in Zotero server JSON format to items Zotero can import
  *
- * Accepts:
+ * Accepts (as raw POST data):
  *		Zotero server JSON
  * Returns:
  *		Items in an alternative format
