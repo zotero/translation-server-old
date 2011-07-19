@@ -46,6 +46,7 @@ cp -r "$ASSETSDIR/application.ini" "$ASSETSDIR/chrome.manifest" "$CWD/components
 cp -r "$ASSETSDIR/translation-server.xul" "$RESDIR/chrome"
 cp -r "$CWD/src/"* \
 	"$XPCOMDIR/rdf" \
+	"$XPCOMDIR/cookieSandbox.js" \
 	"$XPCOMDIR/date.js" \
 	"$XPCOMDIR/debug.js" \
 	"$XPCOMDIR/file.js" \

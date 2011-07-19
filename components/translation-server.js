@@ -33,6 +33,7 @@ const Ci = Components.interfaces;
 /** XPCOM files to be loaded for all modes **/
 const xpcomFiles = [
 	'zotero',
+	'cookieSandbox',
 	'date',
 	'debug',
 	'file',

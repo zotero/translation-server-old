@@ -55,6 +55,7 @@ Components.utils.import("resource://gre/modules/AddonManager.jsm");
 (function(){
 	this.isFx = true;
 	this.isFx4 = true;
+	this.isServer = true;
 	this.browser = "g";
 	
 	this.init = function(port) {
@@ -211,6 +212,11 @@ Zotero.Prefs = new function(){
  * Functions for creating and destroying hidden browser objects
  **/
 Zotero.Browser = new function() {
+	// The number of browsers to maintain as open
+	const BROWSER_POOL_SIZE = 16;
+	var _browserPool = [];
+	var _runningBrowsers = 0;
+	
 	this.createHiddenBrowser = createHiddenBrowser;
 	this.deleteHiddenBrowser = deleteHiddenBrowser;
 	
@@ -226,26 +232,43 @@ Zotero.Browser = new function() {
 			}
 		}
 		
-		// Create a hidden browser
-		var hiddenBrowser = win.document.createElement("browser");
-		hiddenBrowser.setAttribute('type', 'content');
-		hiddenBrowser.setAttribute('disablehistory', 'true');
-		win.document.documentElement.appendChild(hiddenBrowser);
-		// Disable some features
-		hiddenBrowser.docShell.allowImages = false;
-		hiddenBrowser.docShell.allowJavascript = false;
-		hiddenBrowser.docShell.allowMetaRedirects = false;
-		hiddenBrowser.docShell.allowPlugins = false;
-		Zotero.debug("created hidden browser ("
-			+ (win.document.getElementsByTagName('browser').length - 1) + ")");
-		return hiddenBrowser;
+		if(_browserPool.length) {
+			// Take a browser from the pool
+			return _browserPool.shift();
+		} else {
+			_runningBrowsers++;
+			// Create a hidden browser
+			var hiddenBrowser = win.document.createElement("browser");
+			hiddenBrowser.setAttribute('type', 'content');
+			hiddenBrowser.setAttribute('disablehistory', 'true');
+			win.document.documentElement.appendChild(hiddenBrowser);
+			// Disable some features
+			hiddenBrowser.docShell.allowImages = false;
+			hiddenBrowser.docShell.allowJavascript = false;
+			hiddenBrowser.docShell.allowMetaRedirects = false;
+			hiddenBrowser.docShell.allowPlugins = false;
+			Zotero.debug("created hidden browser ("
+				+ (win.document.getElementsByTagName('browser').length - 1) + ")");
+			return hiddenBrowser;
+		}
 	}
 	
 	function deleteHiddenBrowser(myBrowser) {
 		myBrowser.stop();
-		myBrowser.destroy();
-		myBrowser.parentNode.removeChild(myBrowser);
-		myBrowser = null;
+		
+		if(_runningBrowsers > BROWSER_POOL_SIZE) {
+			// Get rid of the browser
+			myBrowser.destroy();
+			myBrowser.parentNode.removeChild(myBrowser);
+			myBrowser = null;
+			_runningBrowsers--;
+		} else {
+			// Park the browser at about:blank
+			myBrowser.loadURI("about:blank");
+			// Add to the pool
+			_browserPool.push(myBrowser);
+		}
+		
 		Zotero.debug("deleted hidden browser");
 	}
 }

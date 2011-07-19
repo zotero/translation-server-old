@@ -65,6 +65,7 @@ Zotero.Server.Translation = new function() {
 	 * Initializes translation server by reading files from local translators directory
 	 */
 	this.init = function() {
+		// Load translators
 		var translatorsDir = Components.classes["@mozilla.org/file/local;1"].
 			createInstance(Components.interfaces.nsILocalFile);
 		translatorsDir.initWithPath(Zotero.Prefs.get("translatorsDirectory"));
@@ -169,15 +170,16 @@ Zotero.Server.Translation.Web.prototype = {
 			this.sendResponse = sendResponseCallback;
 			this._data = data;
 			this._browser = Zotero.Browser.createHiddenBrowser();
+			this._cookieSandbox = new Zotero.CookieSandbox(this._browser, url);
 			
 			var translate = this._translate = new Zotero.Translate.Web();
 			translate.setHandler("translators", this.translators.bind(this));
 			translate.setHandler("select", this.select.bind(this));
 			translate.setHandler("done", this.done.bind(this));
+			translate.setCookieSandbox(this._cookieSandbox);
 			
 			var pageShowCalled = false;
 			var me = this;
-			//translate.setCookieManager(new Zotero.Server.Translation.CookieManager(this._browser, url));
 			this._browser.addEventListener("DOMContentLoaded", function() {
 				try {
 					if(me._browser.contentDocument.location.href === "about:blank") return;
@@ -205,11 +207,14 @@ Zotero.Server.Translation.Web.prototype = {
 	},
 	
 	/**
-	 * Called to abort the request
+	 * Called to check whether this request should be aborted due to timeout, and if so, do the
+	 * aborting
+	 * @param {Boolean} force Whether to abort the request regardless of timeout
 	 */
 	"collect":function(force) {
 		if(!force && Date.now() < this._responseTime+SERVER_SELECT_TIMEOUT*1000) return;
 		
+		this._cookieSandbox.destroy();
 		if(this._browser) Zotero.Browser.deleteHiddenBrowser(this._browser);
 		delete Zotero.Server.Translation.waitingForSelection[this._data.sessionid];
 	},
@@ -220,7 +225,7 @@ Zotero.Server.Translation.Web.prototype = {
 	"translators":function(translate, translators) {
 		if(!translators.length) {
 			// XXX better status code?
-			Zotero.Browser.deleteHiddenBrowser(this._browser);
+			this.collect(true);
 			this.sendResponse(400, "text/plain", "No translators available\n");
 			return;
 		}
@@ -249,6 +254,7 @@ Zotero.Server.Translation.Web.prototype = {
 			}
 			
 			// Send "Multiple Choices" HTTP response
+			this.collect(true);
 			this.sendResponse(300, "application/json", JSON.stringify(itemList));
 			
 			this._responseTime = Date.now();
@@ -264,7 +270,7 @@ Zotero.Server.Translation.Web.prototype = {
 		var haveItems = false;
 		for(var i in selectItems) {
 			if(this._itemList[i] === undefined || this._itemList[i] !== selectItems[i]) {
-				Zotero.Browser.deleteHiddenBrowser(this._browser);
+				this.collect(true);
 				this.sendResponse(412, "text/plain", "Items specified do not match items available\n");
 				return;
 			}
@@ -273,7 +279,7 @@ Zotero.Server.Translation.Web.prototype = {
 		
 		// Make sure at least one item was specified
 		if(!haveItems) {
-			Zotero.Browser.deleteHiddenBrowser(this._browser);
+			this.collect(true);
 			this.sendResponse(400, "text/plain", "No items specified\n");
 			return;
 		}
