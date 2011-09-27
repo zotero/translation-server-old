@@ -45,6 +45,7 @@ const xpcomFiles = [
 	'translation/translate_firefox',
 	'translation/tlds',
 	'utilities',
+	'utilities_translate',
 	'translate_item',
 	'connector/translator',
 	'connector/cachedTypes',

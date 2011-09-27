@@ -55,6 +55,7 @@ cp -r "$CWD/src/"* \
 	"$XPCOMDIR/rdf.js" \
 	"$XPCOMDIR/server.js" \
 	"$XPCOMDIR/utilities.js" \
+	"$XPCOMDIR/utilities_translate.js" \
 	"$RESDIR/chrome/xpcom"
 
 mkdir "$RESDIR/chrome/xpcom/connector"
