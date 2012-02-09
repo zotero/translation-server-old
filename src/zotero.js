@@ -247,8 +247,7 @@ Zotero.Browser = new function() {
 			hiddenBrowser.docShell.allowJavascript = false;
 			hiddenBrowser.docShell.allowMetaRedirects = false;
 			hiddenBrowser.docShell.allowPlugins = false;
-			Zotero.debug("created hidden browser ("
-				+ (win.document.getElementsByTagName('browser').length - 1) + ")");
+			Zotero.debug("Created hidden browser (" + _runningBrowsers + ")");
 			return hiddenBrowser;
 		}
 	}
@@ -269,6 +268,6 @@ Zotero.Browser = new function() {
 			_browserPool.push(myBrowser);
 		}
 		
-		Zotero.debug("deleted hidden browser");
+		Zotero.debug("Deleted hidden browser");
 	}
 }
