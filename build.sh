@@ -1,6 +1,6 @@
 #!/bin/bash
 CWD="`pwd`"
-EXTENSIONDIR="$CWD/../zotero/extension/trunk"
+EXTENSIONDIR="$CWD/modules/zotero"
 XULRUNNERDIR="/Library/Frameworks/XUL.framework"
 
 XPCOMDIR="$EXTENSIONDIR/chrome/content/zotero/xpcom"
