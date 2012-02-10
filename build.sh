@@ -35,7 +35,7 @@ else										# Linux build
 	rm -rf "$RESDIR"
 	mkdir "$RESDIR"
 	cp -r "$XULRUNNERDIR" "$RESDIR/xulrunner"
-	mv "$RESDIR/xulrunner/xulrunner-stub" "$RESDIR/zotero"
+	mv "$RESDIR/xulrunner/xulrunner-stub" "$RESDIR/translation-server"
 fi
 
 # Add components
