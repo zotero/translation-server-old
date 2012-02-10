@@ -1,5 +1,5 @@
 A XULRunner-based approach to Zotero server side translation.
 
 Currently supports import, export, and web translation. Modify the paths
-at the top of build.sh to build. (You will need a Zotero extension
-checkout and a copy of XULRunner.)
+at the top of build.sh and the parameters in config.js to build. (You will need
+a copy of XULRunner.)
