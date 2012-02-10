@@ -25,10 +25,28 @@ if [ -a "$XULRUNNERDIR/Versions" ]; then	# Mac OS X build
 	mkdir "$CONTENTSDIR/Frameworks"
 	mkdir "$CONTENTSDIR/Resources"
 	cp -a "$XULRUNNERDIR" "$CONTENTSDIR/Frameworks/XUL.framework"
-	rm "$CONTENTSDIR/Frameworks/XUL.framework/Versions/Current"
-	mv "$CONTENTSDIR/Frameworks/XUL.framework/Versions/"[1-9]* "$CONTENTSDIR/Frameworks/XUL.framework/Versions/Current"
+	CURRENT_FRAMEWORK="$CONTENTSDIR/Frameworks/XUL.framework/Versions/Current"
+	rm "$CURRENT_FRAMEWORK"
+	mv "$CONTENTSDIR/Frameworks/XUL.framework/Versions/"[1-9]* "$CURRENT_FRAMEWORK"
 	cp "$CONTENTSDIR/Frameworks/XUL.framework/Versions/Current/xulrunner" "$CONTENTSDIR/MacOS/zotero"
 	RESDIR="$CONTENTSDIR/Resources"
+	
+	# UGLY HACK for XULRunner 9.0 builds, which require modified paths
+	install_name_tool -change "@executable_path/libmozutils.dylib" \
+		"@executable_path/../Frameworks/XUL.framework/Versions/Current/libmozutils.dylib" \
+		"$CONTENTSDIR/MacOS/zotero"
+	for lib in "$CURRENT_FRAMEWORK"/*.dylib "$CURRENT_FRAMEWORK/XUL"
+	do
+		for libChange in `basename "$CURRENT_FRAMEWORK"/*.dylib` "XUL"; do
+			install_name_tool -change "@executable_path/$libChange" "@loader_path/$libChange" "$lib"
+		done
+	done
+	for lib in "$CURRENT_FRAMEWORK"/components/*.dylib
+	do
+		for libChange in `basename "$CURRENT_FRAMEWORK"/*.dylib` "XUL"; do
+			install_name_tool -change "@executable_path/$libChange" "@loader_path/../$libChange" "$lib"
+		done
+	done
 else										# Linux build
 	# Set up directory
 	RESDIR="$BUILDDIR"
