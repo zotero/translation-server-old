@@ -214,7 +214,6 @@ Zotero.Server.Translation.Web.prototype = {
 	"collect":function(force) {
 		if(!force && Date.now() < this._responseTime+SERVER_SELECT_TIMEOUT*1000) return;
 		
-		this._cookieSandbox.destroy();
 		if(this._browser) Zotero.Browser.deleteHiddenBrowser(this._browser);
 		delete Zotero.Server.Translation.waitingForSelection[this._data.sessionid];
 	},
