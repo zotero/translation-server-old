@@ -57,6 +57,7 @@ Zotero.Translate.ItemGetter.prototype = {
 				var creator = item.creators[i];
 				if(creator.name) {
 					creator.lastName = creator.name;
+					creator.firstName = "";
 					delete creator.name;
 					creator.fieldMode = 1;
 				}
