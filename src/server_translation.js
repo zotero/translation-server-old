@@ -216,7 +216,7 @@ Zotero.Server.Translation.Web.prototype = {
 	 * @param {Boolean} force Whether to abort the request regardless of timeout
 	 */
 	"collect":function(force) {
-		if(!force && Date.now() < this._responseTime+SERVER_SELECT_TIMEOUT*1000) return;
+		if(!force && this._responseTime && Date.now() < this._responseTime+SERVER_SELECT_TIMEOUT*1000) return;
 		
 		if(this._browser) Zotero.Browser.deleteHiddenBrowser(this._browser);
 		delete Zotero.Server.Translation.waitingForSelection[this._data.sessionid];
@@ -274,7 +274,7 @@ Zotero.Server.Translation.Web.prototype = {
 		for(var i in selectItems) {
 			if(this._itemList[i] === undefined || this._itemList[i] !== selectItems[i]) {
 				this.collect(true);
-				this.sendResponse(412, "text/plain", "Items specified do not match items available\n");
+				this.sendResponse(409, "text/plain", "Items specified do not match items available\n");
 				return;
 			}
 			haveItems = true;
