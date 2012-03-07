@@ -55,6 +55,7 @@ Components.utils.import("resource://gre/modules/AddonManager.jsm");
 (function(){
 	this.isFx = true;
 	this.isFx4 = true;
+	this.isFx5 = true;
 	this.isServer = true;
 	this.browser = "g";
 	
