@@ -64,6 +64,7 @@ Components.utils.import("resource://gre/modules/Services.jsm");
 Zotero.Server.Translation = new function() {
 	const infoRe = /^\s*{[\S\s]*?}\s*?[\r\n]/;
 	this.waitingForSelection = {};
+	this.requestsSinceSelectionCollection = 0;
 	
 	/**
 	 * Initializes translation server by reading files from local translators directory
@@ -202,11 +203,12 @@ Zotero.Server.Translation.Web.prototype = {
 			this._browser.loadURI(url.spec);
 		}
 		
-		// 10% chance of GC
-		if(Math.random() < 0.1) {
+		// GC every 10 requests
+		if((++Zotero.Server.Translation.requestsSinceSelectionCollection) == 10) {
 			for each(var instance in Zotero.Server.Translation.waitingForSelection) {
 				instance.collect();
 			}
+			Zotero.Server.Translation.requestsSinceSelectionCollection = 0;
 		}
 	},
 	
