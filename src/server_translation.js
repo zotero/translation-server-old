@@ -231,7 +231,7 @@ Zotero.Server.Translation.Web.prototype = {
 		if(!translators.length) {
 			// XXX better status code?
 			this.collect(true);
-			this.sendResponse(400, "text/plain", "No translators available\n");
+			this.sendResponse(501, "text/plain", "No translators available\n");
 			return;
 		}
 		
@@ -259,7 +259,6 @@ Zotero.Server.Translation.Web.prototype = {
 			}
 			
 			// Send "Multiple Choices" HTTP response
-			this.collect(true);
 			this.sendResponse(300, "application/json", JSON.stringify(itemList));
 			
 			this._responseTime = Date.now();
