@@ -13,6 +13,10 @@ pref("dom.max_chrome_script_run_time", 0);
 // Use basicViewer for opening new DOM windows from content (for TinyMCE)
 pref("browser.chromeURL", "chrome://zotero/content/standalone/basicViewer.xul");
 
+// Disable CSS and images
+pref("permissions.default.stylesheet", 2);
+pref("permissions.default.image", 2);
+
 pref("network.protocol-handler.expose-all", false);
 pref("network.protocol-handler.expose.zotero", true);
 pref("network.protocol-handler.expose.http", true);
