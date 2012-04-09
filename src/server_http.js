@@ -49,7 +49,6 @@ Zotero.HTTP.processDocuments = function(urls, processor, done, exception, dontDe
 			
 			if(cookieSandbox) cookieSandbox.attachToInterfaceRequestor(xmlhttp);
 			xmlhttp.send();
-			Zotero.debug("hi1");
 		} else {
 			if(done) done();
 		}
@@ -60,7 +59,6 @@ Zotero.HTTP.processDocuments = function(urls, processor, done, exception, dontDe
 	 * @inner
 	 */
 	var onLoad = function() {
-		Zotero.debug("hi2");
 		var parser = Components.classes["@mozilla.org/xmlextras/domparser;1"]
              .createInstance(Components.interfaces.nsIDOMParser);
 		var secMan = Components.classes["@mozilla.org/scriptsecuritymanager;1"]
@@ -72,7 +70,6 @@ Zotero.HTTP.processDocuments = function(urls, processor, done, exception, dontDe
 				"value":(new Zotero.HTTP.Location(url))
 			}
 		});
-		Zotero.debug("hi3");
 		
 		if(doc || !exception) {
 			try {
@@ -95,7 +92,6 @@ Zotero.HTTP.processDocuments = function(urls, processor, done, exception, dontDe
 	if(cookieSandbox) cookieSandbox.attachToInterfaceRequestor(xmlhttp);
 	if(exception) {
 		xmlhttp.onerror = xmlhttp.onabort = xmlhttp.ontimeout = function() {
-			Zotero.debug("hi1");
 			exception("XMLHttpRequest experienced an error");
 			doLoad();
 		};
@@ -103,7 +99,6 @@ Zotero.HTTP.processDocuments = function(urls, processor, done, exception, dontDe
 	} else {
 		xmlhttp.onloadend = onLoad;
 	}
-	xmlhttp.onloadend = function() { Zotero.debug("hi4") };
 	
 	doLoad();
 }

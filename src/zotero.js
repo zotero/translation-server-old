@@ -37,22 +37,13 @@ const ZOTERO_CONFIG = {
 	PREF_BRANCH: 'translation-server.'
 };
 
-// Fx4.0b8+ use implicit SJOWs and get rid of explicit XPCSafeJSObjectWrapper constructor
-// Ugly hack to get around this until we can just kill the XPCSafeJSObjectWrapper calls (when we
-// drop Fx3.6 support)
-try {
-	XPCSafeJSObjectWrapper;
-} catch(e) {
-	eval("var XPCSafeJSObjectWrapper = function(arg) { return arg }");
-}
-
-// Load AddonManager for Firefox 4
-Components.utils.import("resource://gre/modules/AddonManager.jsm");
+Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 /**
  * Core functions
  */
 (function(){
+	var _runningTimers = [];
 	this.isFx = true;
 	this.isFx4 = true;
 	this.isFx5 = true;
@@ -64,6 +55,10 @@ Components.utils.import("resource://gre/modules/AddonManager.jsm");
 		var io = Components.classes['@mozilla.org/network/io-service;1']
 			.getService(Components.interfaces.nsIIOService);
 		io.offline = false;
+		
+		var cs = Components.classes["@mozilla.org/consoleservice;1"].
+			getService(Components.interfaces.nsIConsoleService);
+		cs.registerListener(ConsoleListener);
 		
 		Zotero.Prefs.init();
 		Zotero.Debug.init();
@@ -83,34 +78,24 @@ Components.utils.import("resource://gre/modules/AddonManager.jsm");
 		Zotero.Debug.log(message, level);
 	}
 	
-	
 	/**
-	 * Log a message to the Mozilla JS error console
+	 * Emulates the behavior of window.setTimeout
 	 *
-	 * |type| is a string with one of the flag types in nsIScriptError:
-	 *    'error', 'warning', 'exception', 'strict'
+	 * @param {Function} func			The function to be called
+	 * @param {Integer} ms				The number of milliseconds to wait before calling func
 	 */
-	this.log = function(message, type, sourceName, sourceLine, lineNumber, columnNumber) {
-		var consoleService = Components.classes["@mozilla.org/consoleservice;1"]
-			.getService(Components.interfaces.nsIConsoleService);
-		var scriptError = Components.classes["@mozilla.org/scripterror;1"]
-			.createInstance(Components.interfaces.nsIScriptError);
-		
-		if (!type) {
-			type = 'warning';
-		}
-		var flags = scriptError[type + 'Flag'];
-		
-		scriptError.init(
-			message,
-			sourceName ? sourceName : null,
-			sourceLine != undefined ? sourceLine : null,
-			lineNumber != undefined ? lineNumber : null, 
-			columnNumber != undefined ? columnNumber : null,
-			flags,
-			'component javascript'
-		);
-		consoleService.logMessage(scriptError);
+	this.setTimeout = function(func, ms, runWhenWaiting) {
+		var timer = Components.classes["@mozilla.org/timer;1"].
+			createInstance(Components.interfaces.nsITimer);
+		var timerCallback = {"notify":function() {
+			// execute callback function
+			func();
+			// remove timer from global scope, so it can be garbage collected
+			_runningTimers.splice(_runningTimers.indexOf(timer), 1);
+		}}
+		timer.initWithCallback(timerCallback, ms, Components.interfaces.nsITimer.TYPE_ONE_SHOT);
+		// add timer to global scope so that it doesn't get garbage collected before it completes
+		_runningTimers.push(timer);
 	}
 	
 	/**
@@ -118,10 +103,31 @@ Components.utils.import("resource://gre/modules/AddonManager.jsm");
 	 * @param {Exception} err
 	 */
 	this.logError = function(err) {
-		this.log(err.message ? err.message : err.toString(), "error",
-			err.fileName ? err.fileName : null, null,
-			err.lineNumber ? err.lineNumber : null, null);
+		Zotero.debug(err.message+" at "+err.fileName+":"+err.lineNumber);
 	}
+	
+	/**
+	 * Observer for console messages
+	 * @namespace
+	 */
+	var ConsoleListener = {
+		"QueryInterface":XPCOMUtils.generateQI([Components.interfaces.nsIConsoleMessage,
+			Components.interfaces.nsISupports]),
+		"observe":function(err) {
+			const skip = ['CSS Parser', 'content javascript'];
+			
+			try {
+				err.QueryInterface(Components.interfaces.nsIScriptError);
+				if (skip.indexOf(err.category) != -1 || err.flags & err.warningFlag) {
+					return false;
+				}
+				Zotero.debug(err.message+" at "+err.fileName+":"+err.lineNumber);
+			} catch (e) {
+				Zotero.debug(eerr.toString());
+				return;
+			}
+		}
+	};
 }).call(Zotero);
 
 Zotero.Prefs = new function(){
