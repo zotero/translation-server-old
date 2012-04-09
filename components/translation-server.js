@@ -38,6 +38,7 @@ const xpcomFiles = [
 	'debug',
 	'file',
 	'http',
+	'server_http',
 	'openurl',
 	'server',
 	'server_translation',

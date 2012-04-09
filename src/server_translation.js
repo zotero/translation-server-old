@@ -25,6 +25,7 @@
 
 // Timeout for select request, in seconds
 const SERVER_SELECT_TIMEOUT = 120;
+const SERVER_TRANSLATION_TIMEOUT = 30;
 
 // Format identifiers for export translation
 const SERVER_FORMATS = {
@@ -174,8 +175,7 @@ Zotero.Server.Translation.Web.prototype = {
 			// New request
 			this.sendResponse = sendResponseCallback;
 			this._data = data;
-			this._browser = Zotero.Browser.createHiddenBrowser();
-			this._cookieSandbox = new Zotero.CookieSandbox(this._browser, url);
+			this._cookieSandbox = new Zotero.CookieSandbox(null, url);
 			
 			var translate = this._translate = new Zotero.Translate.Web();
 			translate.setHandler("translators", this.translators.bind(this));
@@ -183,24 +183,13 @@ Zotero.Server.Translation.Web.prototype = {
 			translate.setHandler("done", this.done.bind(this));
 			translate.setCookieSandbox(this._cookieSandbox);
 			
-			var pageShowCalled = false;
-			var me = this;
-			this._browser.addEventListener("DOMContentLoaded", function() {
-				try {
-					if(me._browser.contentDocument.location.href === "about:blank") return;
-					if(pageShowCalled) return;
-					pageShowCalled = true;
-					
-					// get translators
-					translate.setDocument(me._browser.contentDocument);
-					translate.getTranslators();
-				} catch(e) {
-					Zotero.debug(e);
-					throw e;
-				}
-			}, false);
-			
-			this._browser.loadURI(url.spec);
+			Zotero.HTTP.processDocuments([url.spec], function(doc) {
+				translate.setDocument(doc);
+				translate.getTranslators();
+			}, undefined, function(e) {
+				sendResponseCallback(500, "text/plain", "An error occurred retrieving the document\n");
+				Zotero.debug(e);
+			}, undefined, this._cookieSandbox);
 		}
 		
 		// GC every 10 requests
@@ -219,8 +208,6 @@ Zotero.Server.Translation.Web.prototype = {
 	 */
 	"collect":function(force) {
 		if(!force && this._responseTime && Date.now() < this._responseTime+SERVER_SELECT_TIMEOUT*1000) return;
-		
-		if(this._browser) Zotero.Browser.deleteHiddenBrowser(this._browser);
 		delete Zotero.Server.Translation.waitingForSelection[this._data.sessionid];
 	},
 	
