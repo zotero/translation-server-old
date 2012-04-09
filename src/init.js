@@ -85,7 +85,7 @@ for (var i=0; i<rdfXpcomFiles.length; i++) {
 // add connector-related properties
 Zotero.isConnector = true;
 
-Zotero.init(arguments.port);
+Zotero.init(arguments[0] === "-port" ? arguments[1] : undefined);
 
 var gThreadManager = Components.classes["@mozilla.org/thread-manager;1"]
 		.getService(Components.interfaces.nsIThreadManager);
