@@ -79,26 +79,6 @@ Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 	}
 	
 	/**
-	 * Emulates the behavior of window.setTimeout
-	 *
-	 * @param {Function} func			The function to be called
-	 * @param {Integer} ms				The number of milliseconds to wait before calling func
-	 */
-	this.setTimeout = function(func, ms, runWhenWaiting) {
-		var timer = Components.classes["@mozilla.org/timer;1"].
-			createInstance(Components.interfaces.nsITimer);
-		var timerCallback = {"notify":function() {
-			// execute callback function
-			func();
-			// remove timer from global scope, so it can be garbage collected
-			_runningTimers.splice(_runningTimers.indexOf(timer), 1);
-		}}
-		timer.initWithCallback(timerCallback, ms, Components.interfaces.nsITimer.TYPE_ONE_SHOT);
-		// add timer to global scope so that it doesn't get garbage collected before it completes
-		_runningTimers.push(timer);
-	}
-	
-	/**
 	 * Log a JS error to the Mozilla JS error console.
 	 * @param {Exception} err
 	 */

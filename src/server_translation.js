@@ -169,13 +169,17 @@ Zotero.Server.Translation.Web.prototype = {
 		if((runningInstance = Zotero.Server.Translation.waitingForSelection[data.sessionid])
 				&& data.items) {
 			// Already waiting for a items response, so just pass this there
-			runningInstance.sendResponse = sendResponseCallback
+			runningInstance._cookieSandbox.setTimeout(SERVER_TRANSLATION_TIMEOUT*1000,
+				runningInstance.timeout.bind(runningInstance));
+			runningInstance.sendResponse = sendResponseCallback;
 			runningInstance.selectDone(data.items);
 		} else {
 			// New request
 			this.sendResponse = sendResponseCallback;
 			this._data = data;
 			this._cookieSandbox = new Zotero.CookieSandbox(null, url);
+			this._cookieSandbox.setTimeout(SERVER_TRANSLATION_TIMEOUT*1000,
+				this.timeout.bind(this));
 			
 			var translate = this._translate = new Zotero.Translate.Web();
 			translate.setHandler("translators", this.translators.bind(this));
@@ -246,6 +250,7 @@ Zotero.Server.Translation.Web.prototype = {
 			}
 			
 			// Send "Multiple Choices" HTTP response
+			this._cookieSandbox.clearTimeout();
 			this.sendResponse(300, "application/json", JSON.stringify(itemList));
 			
 			this._responseTime = Date.now();
@@ -283,6 +288,7 @@ Zotero.Server.Translation.Web.prototype = {
 	 * Called on translation completion
 	 */
 	"done":function(translate, status) {
+		this._cookieSandbox.clearTimeout();
 		this.collect(true);
 		
 		if(!status) {
@@ -298,6 +304,13 @@ Zotero.Server.Translation.Web.prototype = {
 			
 			this.sendResponse(200, "application/json", JSON.stringify(items));
 		}
+	},
+	
+	/**
+	 * Called if the request timed out before it could complete
+	 */
+	"timeout":function() {
+		this.sendResponse(504, "text/plain", "Translation timed out.\n");		
 	}
 };
 

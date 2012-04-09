@@ -1,3 +1,66 @@
+Zotero.CookieSandbox.prototype._attachToInterfaceRequestor = Zotero.CookieSandbox.prototype.attachToInterfaceRequestor;
+/**
+ * Replaces Zotero.CookieSandbox.prototype.attachToInterfaceRequestor to allow the cookieSandbox
+ * to time out XMLHttpRequests
+ */
+Zotero.CookieSandbox.prototype.attachToInterfaceRequestor = function(ir) {
+	// Check that we are not timed out
+	if(this.timedOut) {
+		throw "Translation timed out; no further XMLHttpRequests allowed";
+	}
+	
+	if(ir instanceof Components.interfaces.nsIXMLHttpRequest) {
+		// Add to list of xhrs
+		if(!this.xhrs) {
+			this.xhrs = [ir];
+		} else {
+			this.xhrs.push(ir);
+		}
+		
+		ir.addEventListener("loadend", function() {
+			var index = this.xhrs.indexOf(ir);
+			if(index !== -1) this.xhrs.shift(index, 1);
+		}, false);
+	}
+	
+	this._attachToInterfaceRequestor(ir);
+};
+
+/**
+ * Sets a timeout for XHRs connected to a CookieSandbox
+ */
+Zotero.CookieSandbox.prototype.setTimeout = function(timeout, callback) {
+	this.timedOut = false;
+	this.clearTimeout();
+	this._timer = Components.classes["@mozilla.org/timer;1"].
+		createInstance(Components.interfaces.nsITimer);
+	this._timerCallback = {"notify":(function() {
+		this.timedOut = true;
+		callback();
+		this.clearTimeout();
+		if(this.xhrs) {
+			for(var i=0; i<this.xhrs.length; i++) {
+				this.xhrs[i].abort();
+			}
+		}
+	}).bind(this)};
+	this._timer.initWithCallback(this._timerCallback, timeout, Components.interfaces.nsITimer.TYPE_ONE_SHOT);
+};
+
+/**
+ * Clears a timeout for XHRs connected to a CookieSandbox
+ */
+Zotero.CookieSandbox.prototype.clearTimeout = function() {
+	if(this._timer) {
+		this._timer.cancel();
+		delete this._timer;
+		delete this._timerCallback;
+	}
+};
+
+/**
+ * Mimics the window.location/document.location interface, given an nsIURL
+ */
 Zotero.HTTP.Location = function(url) {
 	this._url = url;
 	this.hash = url.ref ? "#"+url.ref : "";
@@ -12,6 +75,7 @@ Zotero.HTTP.Location = function(url) {
 Zotero.HTTP.Location.prototype.toString = function() {
 	return this.href;
 }
+
 /**
  * Load one or more documents in a hidden browser
  *

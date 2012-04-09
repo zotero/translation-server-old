@@ -34,7 +34,6 @@ const xpcomFiles = [
 	'debug',
 	'file',
 	'http',
-	'server_http',
 	'openurl',
 	'server',
 	'server_translation',
@@ -46,7 +45,8 @@ const xpcomFiles = [
 	'translate_item',
 	'connector/translator',
 	'connector/cachedTypes',
-	'connector/typeSchemaData'
+	'connector/typeSchemaData',
+	'hacks'
 ];
 
 var Zotero = function() {};
