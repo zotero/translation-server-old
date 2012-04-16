@@ -165,7 +165,7 @@ Zotero.Server.Translation.Web.prototype = {
 			return;
 		}
 		
-		var runningInstance
+		var runningInstance;
 		if((runningInstance = Zotero.Server.Translation.waitingForSelection[data.sessionid])
 				&& data.items) {
 			// Already waiting for a items response, so just pass this there
@@ -175,25 +175,45 @@ Zotero.Server.Translation.Web.prototype = {
 			runningInstance.selectDone(data.items);
 		} else {
 			// New request
-			this.sendResponse = sendResponseCallback;
-			this._data = data;
-			this._cookieSandbox = new Zotero.CookieSandbox(null, url);
-			this._cookieSandbox.setTimeout(SERVER_TRANSLATION_TIMEOUT*1000,
-				this.timeout.bind(this));
 			
-			var translate = this._translate = new Zotero.Translate.Web();
-			translate.setHandler("translators", this.translators.bind(this));
-			translate.setHandler("select", this.select.bind(this));
-			translate.setHandler("done", this.done.bind(this));
-			translate.setCookieSandbox(this._cookieSandbox);
-			
-			Zotero.HTTP.processDocuments([url.spec], function(doc) {
-				translate.setDocument(doc);
-				translate.getTranslators();
-			}, undefined, function(e) {
-				sendResponseCallback(500, "text/plain", "An error occurred retrieving the document\n");
-				Zotero.debug(e);
-			}, undefined, this._cookieSandbox);
+			// Before we even try to fetch the URL, ensure that we have a compatible
+			// translator with a target
+			Zotero.Translators.getWebTranslatorsForLocation(url.spec, (function(data) {
+				var couldHaveTranslator = false;
+				for(var i=0, translator; translator = data[0][i]; i++) {
+					if(translator.target
+							&& translator.runMode === Zotero.Translator.RUN_MODE_IN_BROWSER) {
+						couldHaveTranslator = true;
+						break;
+					}
+				}
+				
+				if(!couldHaveTranslator) {
+					sendResponseCallback(501, "text/plain", "No translators available\n");
+					return;
+				}
+				
+				// Start performing translator
+				this.sendResponse = sendResponseCallback;
+				this._data = data;
+				this._cookieSandbox = new Zotero.CookieSandbox(null, url);
+				this._cookieSandbox.setTimeout(SERVER_TRANSLATION_TIMEOUT*1000,
+					this.timeout.bind(this));
+				
+				var translate = this._translate = new Zotero.Translate.Web();
+				translate.setHandler("translators", this.translators.bind(this));
+				translate.setHandler("select", this.select.bind(this));
+				translate.setHandler("done", this.done.bind(this));
+				translate.setCookieSandbox(this._cookieSandbox);
+				
+				Zotero.HTTP.processDocuments([url.spec], function(doc) {
+					translate.setDocument(doc);
+					translate.getTranslators();
+				}, undefined, function(e) {
+					sendResponseCallback(500, "text/plain", "An error occurred retrieving the document\n");
+					Zotero.debug(e);
+				}, undefined, this._cookieSandbox);
+			}).bind(this));
 		}
 		
 		// GC every 10 requests
