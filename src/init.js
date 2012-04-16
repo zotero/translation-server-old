@@ -102,7 +102,7 @@ if(arguments[0] === "-test" && arguments[1]) {
 	outfile.initWithPath(arguments[1]);
 	
 	var shouldExit = false;
-	Zotero_TranslatorTesters.runAllTests(32, {}, function() {
+	Zotero_TranslatorTesters.runAllTests(32, {}, function(data) {
 		// Write data
 		try {
 			Zotero.File.putContents(outfile, JSON.stringify(data, null, "\t"));
