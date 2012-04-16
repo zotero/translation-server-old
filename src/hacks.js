@@ -90,6 +90,8 @@ Zotero.HTTP.Location.prototype.toString = function() {
 Zotero.HTTP.processDocuments = function(urls, processor, done, exception, dontDelete, cookieSandbox) {
 	var xmlhttp = Components.classes["@mozilla.org/xmlextras/xmlhttprequest;1"].createInstance();
 	xmlhttp.mozBackgroundRequest = true;
+	
+	if(typeof urls === "string") urls = [urls];
 					
 	/**
 	 * Loads the next page

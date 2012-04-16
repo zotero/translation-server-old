@@ -85,9 +85,33 @@ for (var i=0; i<rdfXpcomFiles.length; i++) {
 // add connector-related properties
 Zotero.isConnector = true;
 
+var mainThread = Components.classes["@mozilla.org/thread-manager;1"]
+		.getService(Components.interfaces.nsIThreadManager).currentThread;
 Zotero.init(arguments[0] === "-port" ? arguments[1] : undefined);
 
-var gThreadManager = Components.classes["@mozilla.org/thread-manager;1"]
-		.getService(Components.interfaces.nsIThreadManager);
-var mainThread = gThreadManager.currentThread;
-while(true) mainThread.processNextEvent(true);
+if(arguments[0] === "-test" && arguments[1]) {
+	Cc["@mozilla.org/moz/jssubscript-loader;1"]
+		.getService(Ci.mozIJSSubScriptLoader)
+		.loadSubScript("chrome://translation-server/content/translatorTester.js");
+	// Override TEST_RUN_TIMEOUT from translatorTester.js
+	TEST_RUN_TIMEOUT = SERVER_TRANSLATION_TIMEOUT*1000;
+	
+	// Get file to write to
+	var outfile = Components.classes["@mozilla.org/file/local;1"].
+			createInstance(Components.interfaces.nsILocalFile);
+	outfile.initWithPath(arguments[1]);
+	
+	var shouldExit = false;
+	Zotero_TranslatorTesters.runAllTests(32, {}, function() {
+		// Write data
+		try {
+			Zotero.File.putContents(outfile, JSON.stringify(data, null, "\t"));
+		} catch(e) {
+			Zotero.debug(e);
+		}
+		shouldExit = true;
+	});
+	while(!shouldExit) mainThread.processNextEvent(true);
+} else {
+	while(true) mainThread.processNextEvent(true);
+}

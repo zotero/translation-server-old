@@ -79,6 +79,30 @@ Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 	}
 	
 	/**
+	 * Emulates the behavior of window.setTimeout
+	 *
+	 * @param {Function} func			The function to be called
+	 * @param {Integer} ms				The number of milliseconds to wait before calling func
+	 */
+	this.setTimeout = function(func, ms, runWhenWaiting) {
+		var timer = Components.classes["@mozilla.org/timer;1"].
+			createInstance(Components.interfaces.nsITimer);
+		var timerCallback = {"notify":function() {
+			try {
+				// execute callback function
+				func();
+				// remove timer from global scope, so it can be garbage collected
+				_runningTimers.splice(_runningTimers.indexOf(timer), 1);
+			} catch(e) {
+				Zotero.debug(e);
+			}
+		}}
+		timer.initWithCallback(timerCallback, ms, Components.interfaces.nsITimer.TYPE_ONE_SHOT);
+		// add timer to global scope so that it doesn't get garbage collected before it completes
+		_runningTimers.push(timer);
+	}
+	
+	/**
 	 * Log a JS error to the Mozilla JS error console.
 	 * @param {Exception} err
 	 */
@@ -196,65 +220,13 @@ Zotero.Prefs = new function(){
 }
 
 /**
- * Functions for creating and destroying hidden browser objects
- **/
+ * @namespace
+ */
 Zotero.Browser = new function() {
-	// The number of browsers to maintain as open
-	const BROWSER_POOL_SIZE = 16;
-	var _browserPool = [];
-	var _runningBrowsers = 0;
-	
-	this.createHiddenBrowser = createHiddenBrowser;
-	this.deleteHiddenBrowser = deleteHiddenBrowser;
-	
-	function createHiddenBrowser(win) {
-	 	if (!win) {
-			var win = Components.classes["@mozilla.org/appshell/window-mediator;1"]
-							.getService(Components.interfaces.nsIWindowMediator)
-							.getMostRecentWindow("navigator:browser");
-			if(!win) {
-				var win = Components.classes["@mozilla.org/appshell/window-mediator;1"]
-								.getService(Components.interfaces.nsIWindowWatcher)
-								.activeWindow;
-			}
-		}
-		
-		if(_browserPool.length) {
-			// Take a browser from the pool
-			return _browserPool.shift();
-		} else {
-			_runningBrowsers++;
-			// Create a hidden browser
-			var hiddenBrowser = win.document.createElement("browser");
-			hiddenBrowser.setAttribute('type', 'content');
-			hiddenBrowser.setAttribute('disablehistory', 'true');
-			win.document.documentElement.appendChild(hiddenBrowser);
-			// Disable some features
-			hiddenBrowser.docShell.allowImages = false;
-			hiddenBrowser.docShell.allowJavascript = false;
-			hiddenBrowser.docShell.allowMetaRedirects = false;
-			hiddenBrowser.docShell.allowPlugins = false;
-			Zotero.debug("Created hidden browser (" + _runningBrowsers + ")");
-			return hiddenBrowser;
-		}
-	}
-	
-	function deleteHiddenBrowser(myBrowser) {
-		myBrowser.stop();
-		
-		if(_runningBrowsers > BROWSER_POOL_SIZE) {
-			// Get rid of the browser
-			myBrowser.destroy();
-			myBrowser.parentNode.removeChild(myBrowser);
-			myBrowser = null;
-			_runningBrowsers--;
-		} else {
-			// Park the browser at about:blank
-			myBrowser.loadURI("about:blank");
-			// Add to the pool
-			_browserPool.push(myBrowser);
-		}
-		
-		Zotero.debug("Deleted hidden browser");
-	}
+	/**
+	 * No-op to avoid breaking functions that expect to be able to delete hidden browsers.
+	 * (Hidden browsers are actually just DOM documents in this implementation, and will
+	 * disappear when they go out of scope.)
+	 */
+	this.deleteHiddenBrowser = function deleteHiddenBrowser(myBrowser) {}
 }

@@ -36,6 +36,7 @@ cp -r "$CWD/src/"* \
 	"$XPCOMDIR/server.js" \
 	"$XPCOMDIR/utilities.js" \
 	"$XPCOMDIR/utilities_translate.js" \
+	"$EXTENSIONDIR/chrome/content/zotero/tools/testTranslators/translatorTester.js" \
 	"$BUILDDIR/translation-server"
 
 #cp -r "$ASSETSDIR/application.ini" "$ASSETSDIR/chrome.manifest" "$CWD/components" "$RESDIR"
