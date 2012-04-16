@@ -15,11 +15,9 @@ cp -r "$XULRUNNERSDKDIR/bin/chrome" \
 	"$XULRUNNERSDKDIR/bin/components" \
 	"$XULRUNNERSDKDIR/bin/defaults" \
 	"$XULRUNNERSDKDIR/bin/greprefs.js" \
-	"$XULRUNNERSDKDIR/bin/js" \
 	"$XULRUNNERSDKDIR/bin/"lib* \
 	"$XULRUNNERSDKDIR/bin/modules" \
 	"$XULRUNNERSDKDIR/bin/xpcshell" \
-	"$XULRUNNERSDKDIR/bin/XUL" \
 	"$ASSETSDIR/run_translation-server.sh" \
 	"$BUILDDIR"
 if [ -e "$XULRUNNERSDKDIR/bin/js" ]; then
