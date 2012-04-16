@@ -22,7 +22,13 @@ cp -r "$XULRUNNERSDKDIR/bin/chrome" \
 	"$XULRUNNERSDKDIR/bin/XUL" \
 	"$ASSETSDIR/run_translation-server.sh" \
 	"$BUILDDIR"
-	
+if [ -e "$XULRUNNERSDKDIR/bin/js" ]; then
+	cp "$XULRUNNERSDKDIR/bin/js" "$BUILDDIR"
+fi
+if [ -e "$XULRUNNERSDKDIR/bin/XUL" ]; then
+	cp "$XULRUNNERSDKDIR/bin/XUL" "$BUILDDIR"
+fi
+
 mkdir "$BUILDDIR/translation-server"
 cp -r "$CWD/src/"* \
 	"$XPCOMDIR/rdf" \
