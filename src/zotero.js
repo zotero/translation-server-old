@@ -107,7 +107,8 @@ Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 	 * @param {Exception} err
 	 */
 	this.logError = function(err) {
-		Zotero.debug(err.message+" at "+err.fileName+":"+err.lineNumber);
+		Zotero.debug((err.message ? err.message : err.toString())
+			+(err.fileName ? " at "+err.fileName+(err.lineNumber ? ":"+err.lineNumber : "") : ""));
 	}
 	
 	/**
