@@ -359,13 +359,42 @@ Zotero.Server.Translation.Import.prototype = {
 		translate.setString(data);
 		this.sendResponse = sendResponseCallback;
 		
-		translate.setHandler("translators", this.translators.bind());
-		translate.setHandler("done", this.done.bind());
+		translate.setHandler("translators", this.translators.bind(this));
+		translate.setHandler("done", this.done.bind(this));
 		translate.getTranslators();
 	},
 	
-	"translators":Zotero.Server.Translation.Web.translators,
-	"done":Zotero.Server.Translation.Web.done
+	/**
+	 * Called when translators are available
+	 */
+	"translators":function(translate, translators) {
+		if(!translators.length) {
+			this.sendResponse(501, "text/plain", "No translators available\n");
+			return;
+		}
+		
+		translate.setTranslator(translators[0]);
+		translate.translate(false);
+	},
+	
+	/**
+	 * Called on translation completion
+	 */
+	"done":function(translate, status) {
+		if(!status) {
+			this.sendResponse(500, "text/plain", "An error occurred during translation. Please check translation with Zotero client.\n");
+		} else if(!translate.newItems) {
+			this.sendResponse(400, "text/plain", "Invalid input provided.\n");
+		} else {
+			var n = translate.newItems.length;
+			var items = new Array(n);
+			for(var i=0; i<n; i++) {
+				items[i] = Zotero.Utilities.itemToServerJSON(translate.newItems[i]);
+			}
+			
+			this.sendResponse(200, "application/json", JSON.stringify(items));
+		}
+	}
 };
 
 /**
