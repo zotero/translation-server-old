@@ -87,9 +87,9 @@ Zotero.isConnector = true;
 
 var mainThread = Components.classes["@mozilla.org/thread-manager;1"]
 		.getService(Components.interfaces.nsIThreadManager).currentThread;
-Zotero.init(arguments[0] === "-port" ? arguments[1] : undefined);
 
 if(arguments[0] === "-test" && arguments[1]) {
+	Zotero.init(false);
 	Cc["@mozilla.org/moz/jssubscript-loader;1"]
 		.getService(Ci.mozIJSSubScriptLoader)
 		.loadSubScript("chrome://translation-server/content/translatorTester.js");
@@ -113,5 +113,6 @@ if(arguments[0] === "-test" && arguments[1]) {
 	});
 	while(!shouldExit) mainThread.processNextEvent(true);
 } else {
+	Zotero.init(arguments[0] === "-port" ? arguments[1] : undefined);
 	while(true) mainThread.processNextEvent(true);
 }

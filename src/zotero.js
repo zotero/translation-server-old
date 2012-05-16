@@ -64,7 +64,9 @@ Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 		Zotero.Debug.init();
 		Zotero.Connector_Types.init();
 		Zotero.Server.Translation.init();
-		Zotero.Server.init(port, true, 1000);
+		if(port !== false) {
+			Zotero.Server.init(port, true, 1000);
+		}
 	}
 	
 	/**
