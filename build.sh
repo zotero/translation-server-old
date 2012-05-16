@@ -25,7 +25,7 @@ fi
 if [ -e "$XULRUNNERSDKDIR/bin/XUL" ]; then
 	cp "$XULRUNNERSDKDIR/bin/XUL" "$BUILDDIR"
 fi
-if [ -e "$XULRUNNERSDKDIR/bin/xpcshell.exe" ]
+if [ -e "$XULRUNNERSDKDIR/bin/xpcshell.exe" ]; then
 	cp "$XULRUNNERSDKDIR/bin/xpcshell.exe" \
 		"$XULRUNNERSDKDIR/bin/js.exe" \
 		"$XULRUNNERSDKDIR/bin/"*.dll \
