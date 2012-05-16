@@ -11,13 +11,12 @@ rm -rf "$BUILDDIR"
 mkdir "$BUILDDIR"
 
 cp -r "$XULRUNNERSDKDIR/bin/chrome" \
-	"$XULRUNNERSDKDIR/bin/chrome.manifest" \
+	"$XULRUNNERSDKDIR/bin/"*.manifest \
 	"$XULRUNNERSDKDIR/bin/components" \
 	"$XULRUNNERSDKDIR/bin/defaults" \
 	"$XULRUNNERSDKDIR/bin/greprefs.js" \
 	"$XULRUNNERSDKDIR/bin/"lib* \
 	"$XULRUNNERSDKDIR/bin/modules" \
-	"$XULRUNNERSDKDIR/bin/xpcshell" \
 	"$ASSETSDIR/run_translation-server.sh" \
 	"$BUILDDIR"
 if [ -e "$XULRUNNERSDKDIR/bin/js" ]; then
@@ -25,6 +24,14 @@ if [ -e "$XULRUNNERSDKDIR/bin/js" ]; then
 fi
 if [ -e "$XULRUNNERSDKDIR/bin/XUL" ]; then
 	cp "$XULRUNNERSDKDIR/bin/XUL" "$BUILDDIR"
+fi
+if [ -e "$XULRUNNERSDKDIR/bin/xpcshell.exe" ]
+	cp "$XULRUNNERSDKDIR/bin/xpcshell.exe" \
+		"$XULRUNNERSDKDIR/bin/js.exe" \
+		"$XULRUNNERSDKDIR/bin/"*.dll \
+		"$BUILDDIR"
+else
+	cp "$XULRUNNERSDKDIR/bin/xpcshell" "$BUILDDIR"
 fi
 
 mkdir "$BUILDDIR/translation-server"
