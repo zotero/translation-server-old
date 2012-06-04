@@ -463,7 +463,7 @@ Zotero.Server.Translation.Refresh.prototype = {
 		proc.init(bash);
 		
 		var translatorsDir = "'"+Zotero.Prefs.get("translatorsDirectory").replace("'", "'\\''", "g")+"'";
-		var args = ["-c", "cd "+translatorsDir+" && git pull"];
+		var args = ["-c", "cd "+translatorsDir+" && git pull origin master"];
 		proc.runAsync(args, args.length, {"observe":function(subject, topic) {
 			if(topic === "process-finished" && proc.exitValue === 0) {
 				sendResponseCallback(200, "text/plain", "Translator update completed successfully.");
