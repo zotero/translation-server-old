@@ -43,7 +43,6 @@ cp -r "$CWD/src/"* \
 	"$XPCOMDIR/file.js" \
 	"$XPCOMDIR/http.js" \
 	"$XPCOMDIR/openurl.js" \
-	"$XPCOMDIR/rdf.js" \
 	"$XPCOMDIR/server.js" \
 	"$XPCOMDIR/utilities.js" \
 	"$XPCOMDIR/utilities_translate.js" \
