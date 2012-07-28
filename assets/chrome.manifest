@@ -1,5 +1,0 @@
-content		translation-server				chrome/
-
-component	{2f72439e-b42b-4c1f-bc33-23cb72770f74}			components/translation-server.js
-contract	@mozilla.org/commandlinehandler/general-startup;1?type=translation-server 	{2f72439e-b42b-4c1f-bc33-23cb72770f74}
-category	command-line-handler 	translation-server		@mozilla.org/commandlinehandler/general-startup;1?type=translation-server

@@ -49,9 +49,6 @@ cp -r "$CWD/src/"* \
 	"$EXTENSIONDIR/chrome/content/zotero/tools/testTranslators/translatorTester.js" \
 	"$BUILDDIR/translation-server"
 
-#cp -r "$ASSETSDIR/application.ini" "$ASSETSDIR/chrome.manifest" "$CWD/components" "$RESDIR"
-#cp -r "$ASSETSDIR/translation-server.xul" "$RESDIR/chrome"
-
 mkdir "$BUILDDIR/translation-server/connector"
 cp -r "$XPCOMDIR/connector/cachedTypes.js" \
 	"$XPCOMDIR/connector/translator.js" \
@@ -64,8 +61,12 @@ cp -r "$XPCOMDIR/translation/tlds.js" \
 	"$XPCOMDIR/translation/translate_firefox.js" \
 	"$BUILDDIR/translation-server/translation"
 
+mkdir "$BUILDDIR/translation-server/resource"
+cp -r "$EXTENSIONDIR/resource/q.js" "$BUILDDIR/translation-server/resource"
+
 cp "$CWD/config.js" "$BUILDDIR/defaults/pref"
 echo "content translation-server translation-server/" >> "$BUILDDIR/chrome.manifest"
+echo "resource zotero translation-server/resource/" >> "$BUILDDIR/chrome.manifest"
 
 # Uncomment to enable Venkman
 #mkdir "$RESDIR/extensions"
