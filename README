@@ -25,23 +25,23 @@ Prerequisites
 Configuration
 =============
 
-4. Edit config.js and update the "translation-server.translatorsDirectory" preference
+5. Edit config.js and update the "translation-server.translatorsDirectory" preference
    to reflect the translators directory from step 4.
 
 Build and Run
 =============
 
-5. Run the build.sh script.  If all goes well, there should be no output.
+6. Run the build.sh script.  If all goes well, there should be no output.
 
    $ ./build.sh
 
-6. Run the server:
+7. Run the server:
 
    $ build/run_translation-server.sh 
 
    zotero(3)(+0000000): HTTP server listening on *:1969
 
-7. Try a query!
+8. Try a query!
 
    $ curl -d '{"url":"http://www.tandfonline.com/doi/abs/10.1080/15424060903167229","sessionid":"abc123"}' \
           --header "Content-Type: application/json" \
