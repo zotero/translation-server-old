@@ -59,24 +59,6 @@ Zotero.CookieSandbox.prototype.clearTimeout = function() {
 };
 
 /**
- * Mimics the window.location/document.location interface, given an nsIURL
- */
-Zotero.HTTP.Location = function(url) {
-	this._url = url;
-	this.hash = url.ref ? "#"+url.ref : "";
-	this.host = url.hostPort;
-	this.hostname = url.host;
-	this.href = url.spec;
-	this.pathname = url.filePath;
-	this.port = (url.schemeIs("https") ? 443 : 80);
-	this.protocol = url.scheme+":";
-	this.search = url.query ? "?"+url.query : "";
-}
-Zotero.HTTP.Location.prototype.toString = function() {
-	return this.href;
-}
-
-/**
  * Load one or more documents in a hidden browser
  *
  * @param {String|String[]} urls URL(s) of documents to load
@@ -105,7 +87,7 @@ Zotero.HTTP.processDocuments = function(urls, processor, done, exception, dontDe
 			Zotero.debug("Loading "+url.spec);
 			xmlhttp.open('GET', url.spec, true);
 			// This doesn't return if we use responseType = document. Don't know why.
-			xmlhttp.responseType = "text";
+			xmlhttp.responseType = "document";
 			
 			// Send cookie even if "Allow third-party cookies" is disabled (>=Fx3.6 only)
 			var channel = xmlhttp.channel;
@@ -125,20 +107,10 @@ Zotero.HTTP.processDocuments = function(urls, processor, done, exception, dontDe
 	 * @inner
 	 */
 	var onLoad = function() {
-		var parser = Components.classes["@mozilla.org/xmlextras/domparser;1"]
-             .createInstance(Components.interfaces.nsIDOMParser);
-		var secMan = Components.classes["@mozilla.org/scriptsecuritymanager;1"]
-			.getService(Components.interfaces.nsIScriptSecurityManager);
-		parser.init(secMan.getCodebasePrincipal(url), url, url);
-		var doc = parser.parseFromString(xmlhttp.responseText, "text/html");
-		doc = Zotero.Translate.DOMWrapper.wrap(doc, {
-			"location":{
-				"value":(new Zotero.HTTP.Location(url))
-			}
-		});
-		
+		var doc = xmlhttp.response;		
 		if(doc || !exception) {
 			try {
+				doc = Zotero.HTTP.wrapDocument(doc, url);
 				processor(doc);
 			} catch(e) {
 				if(exception) {
