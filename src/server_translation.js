@@ -466,6 +466,7 @@ Zotero.Server.Translation.Refresh.prototype = {
 		var args = ["-c", "cd "+translatorsDir+" && git pull origin master"];
 		proc.runAsync(args, args.length, {"observe":function(subject, topic) {
 			if(topic === "process-finished" && proc.exitValue === 0) {
+				Zotero.Server.Translation.init();
 				sendResponseCallback(200, "text/plain", "Translator update completed successfully.");
 			} else {
 				sendResponseCallback(500, "text/plain", "An error occurred updating translators.");
