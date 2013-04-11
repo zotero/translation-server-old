@@ -82,8 +82,19 @@ Zotero.HTTP.processDocuments = function(urls, processor, done, exception, dontDe
 	var url;
 	var doLoad = function() {
 		if(urls.length) {
-			url = Services.io.newURI(urls.shift(), "UTF-8", null).
-				QueryInterface(Components.interfaces.nsIURL);
+			var urlString = urls.shift();
+			try {
+				url = Services.io.newURI(urlString, "UTF-8", null).
+					QueryInterface(Components.interfaces.nsIURL);
+			} catch(e) {
+				if(exception) {
+					exception("Invalid URL "+urlString);
+					return;
+				} else {
+					throw(e);
+				}
+			}
+			
 			Zotero.debug("Loading "+url.spec);
 			xmlhttp.open('GET', url.spec, true);
 			// This doesn't return if we use responseType = document. Don't know why.
