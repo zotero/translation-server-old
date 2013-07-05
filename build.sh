@@ -10,28 +10,32 @@ ASSETSDIR="$CWD/assets"
 rm -rf "$BUILDDIR"
 mkdir "$BUILDDIR"
 
-cp -r "$XULRUNNERSDKDIR/bin/chrome" \
-	"$XULRUNNERSDKDIR/bin/"*.manifest \
-	"$XULRUNNERSDKDIR/bin/components" \
-	"$XULRUNNERSDKDIR/bin/defaults" \
-	"$XULRUNNERSDKDIR/bin/greprefs.js" \
-	"$XULRUNNERSDKDIR/bin/"lib* \
-	"$XULRUNNERSDKDIR/bin/modules" \
+FRAMEWORKDIR="$XULRUNNERSDKDIR/bin/XUL.framework/Versions/Current"
+if [ -e "$FRAMEWORKDIR" ]; then
+	BINDIR="$FRAMEWORKDIR"
+else
+	BINDIR="$XULRUNNERSDKDIR/bin"
+fi
+
+cp -r "$BINDIR/omni.ja" \
+	"$BINDIR/"lib* \
 	"$ASSETSDIR/run_translation-server.sh" \
 	"$BUILDDIR"
-if [ -e "$XULRUNNERSDKDIR/bin/js" ]; then
-	cp "$XULRUNNERSDKDIR/bin/js" "$BUILDDIR"
+mkdir -p "$BUILDDIR/defaults/pref"
+
+if [ -e "$BINDIR/js" ]; then
+	cp "$BINDIR/js" "$BUILDDIR"
 fi
-if [ -e "$XULRUNNERSDKDIR/bin/XUL" ]; then
-	cp "$XULRUNNERSDKDIR/bin/XUL" "$BUILDDIR"
+if [ -e "$BINDIR/XUL" ]; then
+	cp "$BINDIR/XUL" "$BUILDDIR"
 fi
-if [ -e "$XULRUNNERSDKDIR/bin/xpcshell.exe" ]; then
-	cp "$XULRUNNERSDKDIR/bin/xpcshell.exe" \
-		"$XULRUNNERSDKDIR/bin/js.exe" \
-		"$XULRUNNERSDKDIR/bin/"*.dll \
+if [ -e "$BINDIR/xpcshell.exe" ]; then
+	cp "$BINDIR/xpcshell.exe" \
+		"$BINDIR/js.exe" \
+		"$BINDIR/"*.dll \
 		"$BUILDDIR"
 else
-	cp "$XULRUNNERSDKDIR/bin/xpcshell" "$BUILDDIR"
+	cp "$BINDIR/xpcshell" "$BUILDDIR"
 fi
 
 mkdir "$BUILDDIR/translation-server"
