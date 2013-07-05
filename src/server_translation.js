@@ -145,7 +145,7 @@ Zotero.Server.Translation.Web.prototype = {
 	"supportedMethods":["POST"],
 	"supportedDataTypes":["application/json"],
 	
-	"init":function(data, sendResponseCallback) {
+	"init":function(url, data, sendResponseCallback) {
 		if(!data.url) {
 			sendResponseCallback(400, "text/plain", "No URL specified\n");
 			return;
@@ -347,7 +347,7 @@ Zotero.Server.Endpoints["/import"] = Zotero.Server.Translation.Import;
 Zotero.Server.Translation.Import.prototype = {
 	"supportedMethods":["POST"],
 	
-	"init":function(data, sendResponseCallback) {
+	"init":function(url, data, sendResponseCallback) {
 		if(!data) {
 			res.writeHead(400, "Bad Request", {'Content-Type': 'text/plain'});
 			res.end("No input provided\n");
@@ -453,7 +453,7 @@ Zotero.Server.Endpoints["/refresh"] = Zotero.Server.Translation.Refresh;
 Zotero.Server.Translation.Refresh.prototype = {
 	"supportedMethods":["GET"],
 	
-	"init":function(data, sendResponseCallback) {
+	"init":function(url, data, sendResponseCallback) {
 		var bash = Components.classes["@mozilla.org/file/local;1"].
 			createInstance(Components.interfaces.nsILocalFile);
 		bash.initWithPath("/bin/bash");
