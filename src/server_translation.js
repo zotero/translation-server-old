@@ -158,10 +158,13 @@ Zotero.Server.Translation.Web.prototype = {
 		
 		try {
 			var url = Services.io.newURI(data.url, "UTF-8", null);
-		} catch(e) {}
-		
-		if(!url || (!url.schemeIs("http") && !url.schemeIs("https"))) {
+		} catch(e) {
 			sendResponseCallback(400, "text/plain", "Invalid URL specified\n");
+			return;
+		}
+		
+		if(!url.schemeIs("http") && !url.schemeIs("https")) {
+			sendResponseCallback(400, "text/plain", "Invalid protocol specified\n");
 			return;
 		}
 		
