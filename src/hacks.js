@@ -17,9 +17,10 @@ Zotero.CookieSandbox.prototype.attachToInterfaceRequestor = function(ir) {
 			this.xhrs.push(ir);
 		}
 		
+		var xhrs = this.xhrs;
 		ir.addEventListener("loadend", function() {
-			var index = this.xhrs.indexOf(ir);
-			if(index !== -1) this.xhrs.shift(index, 1);
+			var index = xhrs.indexOf(ir);
+			if(index !== -1) xhrs.shift(index, 1);
 		}, false);
 	}
 	
