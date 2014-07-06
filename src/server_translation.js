@@ -145,7 +145,7 @@ Zotero.Server.Translation.Web.prototype = {
 	"supportedMethods":["POST"],
 	"supportedDataTypes":["application/json"],
 	
-	"init":function(url, data, sendResponseCallback) {
+	"init":function(reqURL, data, sendResponseCallback) {
 		if(!data.url) {
 			sendResponseCallback(400, "text/plain", "No URL specified\n");
 			return;
