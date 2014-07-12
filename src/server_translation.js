@@ -178,9 +178,9 @@ Zotero.Server.Translation.Web.prototype = {
 			
 			// Before we even try to fetch the URL, ensure that we have a compatible
 			// translator with a target
-			Zotero.Translators.getWebTranslatorsForLocation(url.spec, (function(data) {
+			Zotero.Translators.getWebTranslatorsForLocation(url.spec, (function(translatorData) {
 				var couldHaveTranslator = false;
-				for(var i=0, translator; translator = data[0][i]; i++) {
+				for(var i=0, translator; translator = translatorData[0][i]; i++) {
 					if(translator.target
 							&& translator.runMode === Zotero.Translator.RUN_MODE_IN_BROWSER) {
 						couldHaveTranslator = true;
