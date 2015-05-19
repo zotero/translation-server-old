@@ -5,45 +5,32 @@ Currently supports import, export, and web translation.
 Prerequisites
 =============
 
-1. Install the XULRunner SDK:
+1. Do a recursive clone of this repository. If you've already cloned it, you can run `git submodule update --init --recursive` to make sure you have all the files.
+
+2. Download the XULRunner SDK:
 
    https://developer.mozilla.org/en/Gecko_SDK/
+   
+   translation-server is currently known to work with XULRunner version 31.
 
-2. Create a symlink to XULRunner inside this project directory:
+3. Extract the XULRunner SDK into the repository root, which should create a xulrunner-sdk folder, or symlink the SDK from elsewhere on your system to 'xulrunner-sdk'. You do not need to build the SDK.
 
-   ```
-   $ ln -s /path/to/where/you/put/xulrunner xulrunner-sdk
-   ```
-
-3. Fetch the Zotero extension source as a submodule:
-
-   ```
-   $ git submodule init
-   $ git submodule update
-   ```
-
-4. Clone the Zotero translators repository, too:
-
-   ```
-   $ git clone https://github.com/zotero/translators.git
-   ```
 
 Configuration
 =============
 
-5. Edit config.js and update the "translation-server.translatorsDirectory" preference
-   to reflect the translators directory from step 4.
+4. Edit config.js and update the "translation-server.translatorsDirectory" preference to reflect the full path to the modules/zotero/translators directory.
 
 Build and Run
 =============
 
-6. Run the build.sh script.  If all goes well, there should be no output.
+5. Run the build.sh script.  If all goes well, there should be no output.
 
    ```
    $ ./build.sh
    ```
 
-7. Run the server:
+6. Run the server:
 
    ```
    $ build/run_translation-server.sh 
@@ -51,12 +38,12 @@ Build and Run
    zotero(3)(+0000000): HTTP server listening on *:1969
    ```
 
-8. Try a query!
+7. Try a query!
 
    ```
    $ curl -d '{"url":"http://www.tandfonline.com/doi/abs/10.1080/15424060903167229","sessionid":"abc123"}' \
           --header "Content-Type: application/json" \
-          localhost:1969/web
+          127.0.0.1:1969/web
    ```
 
 Endpoints
