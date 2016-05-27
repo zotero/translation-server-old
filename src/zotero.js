@@ -49,6 +49,9 @@ Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 	this.isFx5 = true;
 	this.isServer = true;
 	this.browser = "v";
+	// Fake the XULRunner version number for now, since Components.interfaces.nsIXULAppInfo
+	// isn't supported in XULRunner
+	this.platformMajorVersion = 41;
 	
 	this.init = function(port) {
 		// ensure browser is online
