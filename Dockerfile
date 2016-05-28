@@ -8,7 +8,7 @@
 
 FROM ubuntu:14.04
 
-RUN apt-get update && apt-get install -y curl firefox
+RUN apt-get update && apt-get install -y curl git firefox
 
 ENV VERSION 41.0
 ENV ARCHITECTURE linux-x86_64
