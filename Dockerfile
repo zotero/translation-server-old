@@ -29,4 +29,5 @@ RUN sed -i 's/\/Users\/simon\/Desktop\/Development\/FS\/zotero\/translators/\/op
 
 RUN ./build.sh
 
-RUN build/run_translation-server.sh
+ENTRYPOINT build/run_translation-server.sh
+
