@@ -11,7 +11,7 @@ Prerequisites
 
    https://developer.mozilla.org/en/Gecko_SDK/
    
-   translation-server is currently known to work with XULRunner version 31.
+   translation-server is currently known to work with XULRunner version 41.
 
 3. Extract the XULRunner SDK into the repository root, which should create a xulrunner-sdk folder, or symlink the SDK from elsewhere on your system to 'xulrunner-sdk'. You do not need to build the SDK.
 
