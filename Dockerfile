@@ -10,9 +10,9 @@ FROM ubuntu:14.04
 
 RUN apt-get update && apt-get install -y curl git firefox
 
-ENV VERSION 41.0
+ENV VERSION 41.0.2
 ENV ARCHITECTURE linux-x86_64
-# alternatively linux-i6841
+# alternatively linux-i686
 
 WORKDIR opt
 RUN mkdir translation-server
