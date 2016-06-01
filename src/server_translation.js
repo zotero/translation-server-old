@@ -66,18 +66,27 @@ Zotero.Server.Translation = new function() {
 	const infoRe = /^\s*{[\S\s]*?}\s*?[\r\n]/;
 	this.waitingForSelection = {};
 	this.requestsSinceSelectionCollection = 0;
+	this.translatorsDirPath = null;
 	
 	/**
 	 * Initializes translation server by reading files from local translators directory
 	 */
 	this.init = function() {
+		// If "translatorsDirectory" pref is empty, default 
+		// to %CurProcD%/../modules/zotero/translators
+		this.translatorsDirPath = Zotero.Prefs.get("translatorsDirectory") ||
+			Components.classes["@mozilla.org/file/directory_service;1"]
+			.getService(Components.interfaces.nsIProperties)
+			.get("CurProcD", Components.interfaces.nsIFile)
+			.path + "/../modules/zotero/translators";
 		// Load translators
-		var translatorsDir = Components.classes["@mozilla.org/file/local;1"].
-			createInstance(Components.interfaces.nsILocalFile);
-		translatorsDir.initWithPath(Zotero.Prefs.get("translatorsDirectory"));
+		var translatorsDir = Components.classes["@mozilla.org/file/local;1"]
+			.createInstance(Components.interfaces.nsILocalFile);
+		dump("Loading translators from "+this.translatorsDirPath+"\n");
+		translatorsDir.initWithPath(this.translatorsDirPath);
 		
 		if(!translatorsDir.exists()) {
-			dump("Translators directory "+Zotero.Prefs.get("translatorsDirectory")+" does not "+
+			dump("Translators directory "+this.translatorsDirPath+" does not "+
 				"exist. Please set this correctly in config.js.\n");
 			Components.classes['@mozilla.org/toolkit/app-startup;1']
 				.getService(Components.interfaces.nsIAppStartup)
@@ -462,8 +471,8 @@ Zotero.Server.Translation.Refresh.prototype = {
 			createInstance(Components.interfaces.nsIProcess);
 		proc.init(bash);
 		
-		var translatorsDir = "'"+Zotero.Prefs.get("translatorsDirectory").replace("'", "'\\''", "g")+"'";
-		var args = ["-c", "cd "+translatorsDir+" && git pull origin master"];
+		var translatorsDirPathClean = "'"+Zotero.Server.Translation.translatorsDirPath.replace("'", "'\\''", "g")+"'";
+		var args = ["-c", "cd "+translatorsDirPathClean+" && git pull origin master"];
 		proc.runAsync(args, args.length, {"observe":function(subject, topic) {
 			if(topic === "process-finished" && proc.exitValue === 0) {
 				Zotero.Server.Translation.init();

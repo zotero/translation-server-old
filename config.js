@@ -1,4 +1,4 @@
-pref("translation-server.translatorsDirectory", "/Users/simon/Desktop/Development/FS/zotero/translators");
+pref("translation-server.translatorsDirectory", "");
 pref("translation-server.httpServer.port", "1969");
 pref("translation-server.debug.log", true);
 pref("translation-server.debug.time", true);
