@@ -5,15 +5,28 @@ Currently supports import, export, and web translation.
 Prerequisites
 =============
 
-1. Do a recursive clone of this repository. If you've already cloned it, you can run `git submodule update --init --recursive` to make sure you have all the files.
+1. Do a recursive clone of this repository. If you've already cloned it, you
+can run `git submodule update --init --recursive` to make sure you have all the
+files.
 
 1. Download the XULRunner SDK:
 
-   https://developer.mozilla.org/en/Gecko_SDK/
-   
-   translation-server is currently known to work with XULRunner version 41.
+    https://archive.mozilla.org/pub/firefox/releases/<version>/firefox-<version>.<platform>-<arch>.sdk.tar.bz2
 
-1. Extract the XULRunner SDK into the repository root, which should create a xulrunner-sdk folder, or symlink the SDK from elsewhere on your system to 'xulrunner-sdk'. You do not need to build the SDK.
+E.g. https://archive.mozilla.org/pub/firefox/releases/46.0/firefox-46.0.linux-x86_64.sdk.tar.bz2
+
+translation-server is currently known to work with Firefox SDK version 47.
+
+3. Extract the Firefox SDK into the repository root, which should create a
+xulrunner-sdk folder, or symlink the SDK from elsewhere on your system to
+`firefox-sdk`. You do **not** need to build the SDK.
+
+Configuration
+=============
+
+4. Edit config.js and update the "translation-server.translatorsDirectory"
+preference to reflect the full path to the modules/zotero/translators
+directory. 
 
 Build and Run
 =============
