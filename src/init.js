@@ -42,10 +42,12 @@ const xpcomFiles = [
 	'translation/tlds',
 	'utilities',
 	'utilities_translate',
+	'utilities_internal',
 	'translate_item',
 	'connector/translator',
 	'connector/cachedTypes',
 	'connector/typeSchemaData',
+	'data/item',
 	'hacks'
 ];
 

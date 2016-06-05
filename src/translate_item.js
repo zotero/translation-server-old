@@ -49,7 +49,7 @@ Zotero.Translate.ItemGetter.prototype = {
 	 */
 	"nextItem":function() {
 		if(!this._itemsLeft.length) return false;
-		var item = Zotero.Utilities.itemToExportFormat(this._itemsLeft.shift());
+		var item = Zotero.Utilities.Internal.itemToExportFormat(this._itemsLeft.shift());
 		
 		// convert single field creators to format expected by export
 		if(item.creators) {
