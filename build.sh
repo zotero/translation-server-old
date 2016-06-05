@@ -50,7 +50,6 @@ cp -r "$CWD/src/"* \
 	"$XPCOMDIR/server.js" \
 	"$XPCOMDIR/utilities.js" \
 	"$XPCOMDIR/utilities_translate.js" \
-	"$XPCOMDIR/utilities_internal.js" \
 	"$XPCOMDIR/xregexp" \
 	"$EXTENSIONDIR/chrome/content/zotero/tools/testTranslators/translatorTester.js" \
 	"$BUILDDIR/translation-server"
@@ -66,9 +65,6 @@ cp -r "$XPCOMDIR/translation/tlds.js" \
 	"$XPCOMDIR/translation/translate.js" \
 	"$XPCOMDIR/translation/translate_firefox.js" \
 	"$BUILDDIR/translation-server/translation"
-
-mkdir "$BUILDDIR/translation-server/data"
-cp -r "$XPCOMDIR/data/item.js" "$BUILDDIR/translation-server/data"
 
 mkdir "$BUILDDIR/translation-server/resource"
 cp -r "$EXTENSIONDIR/resource/q.js" "$BUILDDIR/translation-server/resource"
