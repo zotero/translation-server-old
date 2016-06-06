@@ -49,8 +49,14 @@ Zotero.Translate.ItemGetter.prototype = {
 	 */
 	"nextItem":function() {
 		if(!this._itemsLeft.length) return false;
-		var item = Zotero.Utilities.itemToExportFormat(this._itemsLeft.shift());
-		
+		var item = this._itemsLeft.shift();
+		if (!item.attachments) {
+			item.attachments = [];
+		}
+		if (!item.notes) {
+			item.notes = [];
+		}
+
 		// convert single field creators to format expected by export
 		if(item.creators) {
 			for(var i=0; i<item.creators.length; i++) {
