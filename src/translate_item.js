@@ -50,7 +50,7 @@ Zotero.Translate.ItemGetter.prototype = {
 	"nextItem":function() {
 		if(!this._itemsLeft.length) return false;
 		var item = this._itemsLeft.shift();
-		if (!item.attachements) {
+		if (!item.attachments) {
 			item.attachments = [];
 		}
 		if (!item.notes) {
