@@ -109,16 +109,16 @@ Zotero.Server.Translation = new function() {
 			// We assume lastUpdated is at the end to avoid running the regexp on more than necessary
 			var lastUpdatedIndex = data.indexOf('"lastUpdated"');
 			if (lastUpdatedIndex == -1) {
-				Zotero.debug("Invalid or missing translator metadata JSON object in "+file);
-				return;
+				Zotero.debug("Invalid or missing translator metadata JSON object in " + filename);
+				continue;
 			}
 			
 			// Add 50 characters to clear lastUpdated timestamp and final "}"
 			var header = data.substr(0, lastUpdatedIndex + 50);
 			var m = infoRe.exec(header);
 			if (!m) {
-				Zotero.debug("Invalid or missing translator metadata JSON object in "+file);
-				return;
+				Zotero.debug("Invalid or missing translator metadata JSON object in " + filename);
+				continue;
 			}
 			
 			var metadataString = m[0];
@@ -126,8 +126,8 @@ Zotero.Server.Translation = new function() {
 			try {
 				var info = JSON.parse(metadataString);
 			} catch(e) {
-				Zotero.debug("Invalid or missing translator metadata JSON object in "+file);
-				return;
+				Zotero.debug("Invalid or missing translator metadata JSON object in " + filename);
+				continue;
 			}
 			info.code = data;
 			
