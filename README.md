@@ -96,3 +96,11 @@ Converts items in Zotero API JSON format to a supported export format (RIS, BibT
 * query parameter: `format`, which must be a [supported export format](https://github.com/zotero/translation-server/blob/master/src/server_translation.js#L31-43)
 * request body: An array of items in Zotero API JSON format
 
+Tests
+=====
+
+To run the tests, go to the translation-server directory and run:
+```
+./build/run_translation-server.sh -test /path/to/file/output.JSON
+```
+
