@@ -1,0 +1,7 @@
+.*
+xulrunner*
+firefox*
+build
+*.log
+README.md
+Dockerfile
