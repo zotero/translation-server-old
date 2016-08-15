@@ -11,16 +11,15 @@ FROM ubuntu:14.04
 RUN mkdir /opt/zts
 WORKDIR /opt/zts
 
-RUN apt-get update \
-    && apt-get install -y make wget firefox
-
 COPY . .
 
 # See makefile for variables, e.g.
 # make SDK_VERSION=45.0 build
-RUN make build
-
-RUN make clean-sdk
+RUN apt-get update \
+    && apt-get install -y make wget firefox \
+    && make build \
+    && make clean-sdk \
+    && apt-get --purge -y remove make wget
 
 ENTRYPOINT build/run_translation-server.sh
 
