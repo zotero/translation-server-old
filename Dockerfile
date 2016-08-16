@@ -19,8 +19,10 @@ RUN apt-get update \
     && apt-get install -y make wget firefox \
     && bash fetch_sdk.sh \
     && bash build.sh \
+    && rm -rf firefox-sdk \
     && apt-get --purge -y remove make wget firefox \
-    && rm -rf /var/cache/apt
+    && rm -rf /var/cache/apt \
+    && rm -rf /var/lib/apt/lists
 
 ENTRYPOINT build/run_translation-server.sh
 
