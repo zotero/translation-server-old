@@ -17,9 +17,10 @@ COPY . .
 # make SDK_VERSION=45.0 build
 RUN apt-get update \
     && apt-get install -y make wget firefox \
-    && make build \
-    && make clean-sdk \
-    && apt-get --purge -y remove make wget
+    && bash fetch_sdk.sh \
+    && bash build.sh \
+    && apt-get --purge -y remove make wget firefox \
+    && rm -rf /var/cache/apt
 
 ENTRYPOINT build/run_translation-server.sh
 
