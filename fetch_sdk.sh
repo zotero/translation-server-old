@@ -28,6 +28,10 @@ esac
 SDK_TARBALL="firefox-$SDK_VERSION.$SDK_OS.sdk.$SDK_TARBALL_EXT"
 SDK_URL="https://archive.mozilla.org/pub/firefox/releases/$SDK_VERSION/$SDK_TARBALL"
 
+# Remove old XULRunner directory if it exists
+if [[ -e "xulrunner-sdk" ]];then
+    rm -rf "xulrunner-sdk"
+fi
 if [[ -e "firefox-sdk" ]];then
     rm -rf "firefox-sdk"
 fi
