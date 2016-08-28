@@ -40,7 +40,7 @@ if [[ -e "$SDK_TARBALL" ]];then
 fi
 wget --progress=bar:force "$SDK_URL"
 if [[ "$SDK_TARBALL_EXT" = "tar.bz2" ]];then
-    tar xf "$SDK_TARBALL"
+    tar vxf "$SDK_TARBALL"
 else
     unzip "$SDK_TARBALL"
 fi
