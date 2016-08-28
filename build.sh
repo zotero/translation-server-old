@@ -13,10 +13,19 @@ mkdir "$BUILDDIR"
 BINSDKDIR="$FIREFOXSDKDIR/sdk/bin"
 BINDIR="$FIREFOXSDKDIR/bin"
 
-cp -r "$BINDIR/omni.ja" \
-	"$BINDIR/"lib* \
-	"$ASSETSDIR/run_translation-server.sh" \
-	"$BUILDDIR"
+if [ `uname -s` = "Darwin" ]; then
+	cp -R "$FIREFOXSDKDIR/bin/Firefox.app/Contents/Resources/omni.ja" \
+		"$FIREFOXSDKDIR"/bin/Firefox.app/Contents/MacOS/XUL \
+		"$FIREFOXSDKDIR"/bin/Firefox.app/Contents/MacOS/lib* \
+		"$FIREFOXSDKDIR"/bin/Firefox.app/Contents/Resources/icudt56l.dat \
+		"$BUILDDIR"
+else
+	cp "$BINDIR/omni.ja" \
+		"$BINDIR/"lib* \
+		"$BUILDDIR"
+fi
+
+cp -p "$ASSETSDIR/run_translation-server.sh" "$BUILDDIR"
 mkdir -p "$BUILDDIR/defaults/pref"
 
 if [ -e "$BINDIR/js" ]; then
@@ -36,7 +45,7 @@ else
 fi
 
 mkdir "$BUILDDIR/translation-server"
-cp -r "$CWD/src/"* \
+cp -R "$CWD/src/"* \
 	"$XPCOMDIR/rdf" \
 	"$XPCOMDIR/cookieSandbox.js" \
 	"$XPCOMDIR/date.js" \
@@ -52,19 +61,19 @@ cp -r "$CWD/src/"* \
 	"$BUILDDIR/translation-server"
 
 mkdir "$BUILDDIR/translation-server/connector"
-cp -r "$XPCOMDIR/connector/cachedTypes.js" \
+cp -R "$XPCOMDIR/connector/cachedTypes.js" \
 	"$XPCOMDIR/connector/translator.js" \
 	"$XPCOMDIR/connector/typeSchemaData.js" \
 	"$BUILDDIR/translation-server/connector"
 
 mkdir "$BUILDDIR/translation-server/translation"
-cp -r "$XPCOMDIR/translation/tlds.js" \
+cp -R "$XPCOMDIR/translation/tlds.js" \
 	"$XPCOMDIR/translation/translate.js" \
 	"$XPCOMDIR/translation/translate_firefox.js" \
 	"$BUILDDIR/translation-server/translation"
 
 mkdir "$BUILDDIR/translation-server/resource"
-cp -r "$EXTENSIONDIR/resource/q.js" "$BUILDDIR/translation-server/resource"
+cp -R "$EXTENSIONDIR/resource/q.js" "$BUILDDIR/translation-server/resource"
 
 cp "$CWD/config.js" "$BUILDDIR/defaults/pref"
 echo "content translation-server translation-server/" >> "$BUILDDIR/chrome.manifest"
