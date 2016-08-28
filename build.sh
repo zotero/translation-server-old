@@ -1,7 +1,7 @@
 #!/bin/bash
 CWD="`pwd`"
 EXTENSIONDIR="$CWD/modules/zotero"
-XULRUNNERSDKDIR="$CWD/xulrunner-sdk"
+FIREFOXSDKDIR="$CWD/firefox-sdk"
 
 XPCOMDIR="$EXTENSIONDIR/chrome/content/zotero/xpcom"
 BUILDDIR="$CWD/build"
@@ -10,12 +10,8 @@ ASSETSDIR="$CWD/assets"
 rm -rf "$BUILDDIR"
 mkdir "$BUILDDIR"
 
-FRAMEWORKDIR="$XULRUNNERSDKDIR/bin/XUL.framework/Versions/Current"
-if [ -e "$FRAMEWORKDIR" ]; then
-	BINDIR="$FRAMEWORKDIR"
-else
-	BINDIR="$XULRUNNERSDKDIR/bin"
-fi
+BINSDKDIR="$FIREFOXSDKDIR/sdk/bin"
+BINDIR="$FIREFOXSDKDIR/bin"
 
 cp -r "$BINDIR/omni.ja" \
 	"$BINDIR/"lib* \
@@ -29,13 +25,14 @@ fi
 if [ -e "$BINDIR/XUL" ]; then
 	cp "$BINDIR/XUL" "$BUILDDIR"
 fi
-if [ -e "$BINDIR/xpcshell.exe" ]; then
-	cp "$BINDIR/xpcshell.exe" \
+if [ -e "$BINSDKDIR/xpcshell.exe" ]; then
+	cp "$BINSDKDIR/xpcshell.exe" \
 		"$BINDIR/js.exe" \
 		"$BINDIR/"*.dll \
 		"$BUILDDIR"
 else
-	cp "$BINDIR/xpcshell" "$BUILDDIR"
+	cp "$BINSDKDIR/xpcshell" "$BUILDDIR"
+	chmod a+x "$BUILDDIR/xpcshell"
 fi
 
 mkdir "$BUILDDIR/translation-server"

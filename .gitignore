@@ -1,2 +1,3 @@
 build
-xulrunner-sdk
+firefox-sdk
+firefox*.tar.bz2
