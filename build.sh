@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+
 CWD="`pwd`"
 EXTENSIONDIR="$CWD/modules/zotero"
 FIREFOXSDKDIR="$CWD/firefox-sdk"
