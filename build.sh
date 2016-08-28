@@ -1,13 +1,13 @@
 #!/bin/bash
 set -euo pipefail
 
-CWD="`pwd`"
-EXTENSIONDIR="$CWD/modules/zotero"
-FIREFOXSDKDIR="$CWD/firefox-sdk"
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+EXTENSIONDIR="$SCRIPT_DIR/modules/zotero"
+FIREFOXSDKDIR="$SCRIPT_DIR/firefox-sdk"
 
 XPCOMDIR="$EXTENSIONDIR/chrome/content/zotero/xpcom"
-BUILDDIR="$CWD/build"
-ASSETSDIR="$CWD/assets"
+BUILDDIR="$SCRIPT_DIR/build"
+ASSETSDIR="$SCRIPT_DIR/assets"
 
 rm -rf "$BUILDDIR"
 mkdir "$BUILDDIR"
@@ -47,7 +47,7 @@ else
 fi
 
 mkdir "$BUILDDIR/translation-server"
-cp -R "$CWD/src/"* \
+cp -R "$SCRIPT_DIR/src/"* \
 	"$XPCOMDIR/rdf" \
 	"$XPCOMDIR/cookieSandbox.js" \
 	"$XPCOMDIR/date.js" \
@@ -77,17 +77,17 @@ cp -R "$XPCOMDIR/translation/tlds.js" \
 mkdir "$BUILDDIR/translation-server/resource"
 cp -R "$EXTENSIONDIR/resource/q.js" "$BUILDDIR/translation-server/resource"
 
-cp "$CWD/config.js" "$BUILDDIR/defaults/pref"
+cp "$SCRIPT_DIR/config.js" "$BUILDDIR/defaults/pref"
 echo "content translation-server translation-server/" >> "$BUILDDIR/chrome.manifest"
 echo "resource zotero translation-server/resource/" >> "$BUILDDIR/chrome.manifest"
 
 # Uncomment to enable Venkman
 #mkdir "$RESDIR/extensions"
-#cp "$CWD/{f13b157f-b174-47e7-a34d-4815ddfdfeb8}.xpi" "$RESDIR/extensions"
+#cp "$SCRIPT_DIR/{f13b157f-b174-47e7-a34d-4815ddfdfeb8}.xpi" "$RESDIR/extensions"
 
 # Add preferences
 #cp -r "$EXTENSIONDIR/defaults" "$RESDIR"
-#cp -r "$CWD/config.js" "$ASSETSDIR/prefs.js" "$RESDIR/defaults/preferences"
+#cp -r "$SCRIPT_DIR/config.js" "$ASSETSDIR/prefs.js" "$RESDIR/defaults/preferences"
 #perl -pi -e 's/pref\("extensions\.zotero\.httpServer\.enabled", false\);/pref("extensions.zotero.httpServer.enabled", true);/g' "$RESDIR/defaults/preferences/zotero.js"
 #perl -pi -e 's/pref\("extensions\.zotero\.httpServer\.port",[^\)]*\);//g' "$RESDIR/defaults/preferences/zotero.js"
 #perl -pi -e 's/pref\("extensions\.zotero\.debug\.log",\s*false\);//g' "$RESDIR/defaults/preferences/zotero.js"
