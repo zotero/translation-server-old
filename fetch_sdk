@@ -40,7 +40,18 @@ if [[ -e "$SDK_TARBALL" ]];then
 fi
 wget --progress=bar:force "$SDK_URL"
 if [[ "$SDK_TARBALL_EXT" = "tar.bz2" ]];then
-	tar vxf "$SDK_TARBALL"
+	tar --exclude=browser \
+		--exclude='crashreporter*' \
+		--exclude='updater*' \
+		--exclude='plugin-container*' \
+		--exclude='*.png' \
+		--exclude=browser \
+		--exclude=host \
+		--exclude=include \
+		--exclude=idl \
+		--exclude=firefox-sdk/lib/ \
+		--exclude=firefox-sdk/sdk/lib/ \
+		-vxf "$SDK_TARBALL"
 else
 	unzip "$SDK_TARBALL"
 fi
