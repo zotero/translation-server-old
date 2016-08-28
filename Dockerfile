@@ -17,7 +17,7 @@ COPY . .
 # make SDK_VERSION=45.0 build
 RUN apt-get update \
     && apt-get install -y make wget firefox \
-    && bash fetch_sdk.sh \
+    && bash fetch_sdk \
     && bash build.sh \
     && rm -rf firefox-sdk \
     && apt-get --purge -y remove make wget firefox \
