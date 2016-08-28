@@ -23,7 +23,7 @@ case "$(uname -s)" in
 	   fi
 	   SDK_TARBALL_EXT="zip"
 	   ;;
-   *) echo 'Unsupported Operating system'; exit 1 ;;
+   *) echo 'Unsupported operating system'; exit 1 ;;
 esac
 SDK_TARBALL="firefox-$SDK_VERSION.$SDK_OS.sdk.$SDK_TARBALL_EXT"
 SDK_URL="https://archive.mozilla.org/pub/firefox/releases/$SDK_VERSION/$SDK_TARBALL"
