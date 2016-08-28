@@ -1,41 +1,20 @@
-An xpcshell-based approach to Zotero server side translation.
+Server-side Zotero translation using xpcshell
 
-Currently supports import, export, and web translation.
+Currently supports import, export, and web translation
 
-Prerequisites
+Building
 =============
 
-1. Do a recursive clone of this repository. If you've already cloned it, you
-can run `git submodule update --init --recursive` to make sure you have all the
-files.
+1. `git clone --recursive https://github.com/zotero/translation-server`
 
-1. Download the XULRunner SDK:
+1. `cd translation-server`
 
-    https://archive.mozilla.org/pub/firefox/releases/<version>/firefox-<version>.<platform>-<arch>.sdk.tar.bz2
+1. `./fetch_sdk`
 
-E.g. https://archive.mozilla.org/pub/firefox/releases/46.0/firefox-46.0.linux-x86_64.sdk.tar.bz2
+1. `./build.sh`
 
-translation-server is currently known to work with Firefox SDK version 47.
-
-3. Extract the Firefox SDK into the repository root, which should create a
-xulrunner-sdk folder, or symlink the SDK from elsewhere on your system to
-`firefox-sdk`. You do **not** need to build the SDK.
-
-Configuration
+Running
 =============
-
-4. Edit config.js and update the "translation-server.translatorsDirectory"
-preference to reflect the full path to the modules/zotero/translators
-directory. 
-
-Build and Run
-=============
-
-1. Run the build.sh script.  If all goes well, there should be no output.
-
-   ```
-   $ ./build.sh
-   ```
 
 1. Run the server:
 
@@ -55,7 +34,9 @@ Build and Run
 
 Docker Container
 ================
-tba
+
+1. `docker build -t translation-server -f Dockerfile .`
+1. `docker run --rm -p 1969:1969 --name translation-server-container translation-server`
 
 
 Endpoints
