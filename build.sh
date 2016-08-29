@@ -31,17 +31,14 @@ fi
 cp -p "$ASSETSDIR/run_translation-server.sh" "$BUILDDIR"
 mkdir -p "$BUILDDIR/defaults/pref"
 
-if [ -e "$BINDIR/js" ]; then
-	cp "$BINDIR/js" "$BUILDDIR"
-fi
 if [ -e "$BINDIR/XUL" ]; then
 	cp "$BINDIR/XUL" "$BUILDDIR"
 fi
 if [ -e "$BINSDKDIR/xpcshell.exe" ]; then
 	cp "$BINSDKDIR/xpcshell.exe" \
-		"$BINDIR/js.exe" \
 		"$BINDIR/"*.dll \
 		"$BUILDDIR"
+	chmod a+x "$BUILDDIR/xpcshell.exe"
 else
 	cp "$BINSDKDIR/xpcshell" "$BUILDDIR"
 	chmod a+x "$BUILDDIR/xpcshell"
