@@ -17,5 +17,7 @@ RUN apt-get update \
     && rm -rf /var/cache/apt \
     && rm -rf /var/lib/apt/lists
 
+EXPOSE 1969
+
 ENTRYPOINT build/run_translation-server.sh
 
