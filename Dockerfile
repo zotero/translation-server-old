@@ -9,11 +9,11 @@ WORKDIR /opt/translation-server
 COPY . .
 
 RUN apt-get update \
-    && apt-get install -y make wget firefox \
+    && apt-get install -y wget firefox \
     && bash fetch_sdk \
     && bash build.sh \
     && rm -rf firefox-sdk \
-    && apt-get --purge -y remove make wget firefox \
+    && apt-get --purge -y remove wget firefox \
     && rm -rf /var/cache/apt \
     && rm -rf /var/lib/apt/lists
 
