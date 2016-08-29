@@ -23,6 +23,7 @@ if [ `uname -s` = "Darwin" ]; then
 		"$BUILDDIR"
 else
 	cp "$BINDIR/omni.ja" \
+		"$BINDIR/icudt56l.dat" \
 		"$BINDIR/"lib* \
 		"$BUILDDIR"
 fi
