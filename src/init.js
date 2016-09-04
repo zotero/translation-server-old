@@ -119,8 +119,13 @@ if(arguments[0] === "-test" && arguments[1]) {
 	outfile.initWithPath(arguments[1]);
 	
 	var shouldExit = false;
-	Zotero_TranslatorTesters.runAllTests(32, {}, function (data, last) {
-		// Write data
+	
+	function writeData(results, last) {
+		var data = {
+			browser: "v",
+			results
+		};
+		
 		try {
 			Zotero.File.putContents(outfile, JSON.stringify(data, null, "\t"));
 		} catch(e) {
@@ -129,7 +134,9 @@ if(arguments[0] === "-test" && arguments[1]) {
 		if (last) {
 			shouldExit = true;
 		}
-	});
+	}
+	
+	Zotero_TranslatorTesters.runAllTests(32, {}, writeData);
 	while(!shouldExit) mainThread.processNextEvent(true);
 } else {
 	Zotero.init(arguments[0] === "-port" ? arguments[1] : undefined);
