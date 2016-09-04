@@ -119,14 +119,16 @@ if(arguments[0] === "-test" && arguments[1]) {
 	outfile.initWithPath(arguments[1]);
 	
 	var shouldExit = false;
-	Zotero_TranslatorTesters.runAllTests(32, {}, function(data) {
+	Zotero_TranslatorTesters.runAllTests(32, {}, function (data, last) {
 		// Write data
 		try {
 			Zotero.File.putContents(outfile, JSON.stringify(data, null, "\t"));
 		} catch(e) {
 			Zotero.debug(e);
 		}
-		shouldExit = true;
+		if (last) {
+			shouldExit = true;
+		}
 	});
 	while(!shouldExit) mainThread.processNextEvent(true);
 } else {
