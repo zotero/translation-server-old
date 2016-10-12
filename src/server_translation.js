@@ -30,6 +30,7 @@ const SERVER_TRANSLATION_TIMEOUT = 30;
 // Format identifiers for export translation
 const SERVER_FORMATS = {
 	"bibtex":"9cb70025-a888-4a29-a210-93ec52da40d4",
+	"biblatex":"b6e39b57-8942-4d11-8259-342c46ce395f",
 	"bookmarks":"4e7119e0-02be-4848-86ef-79a64185aad8",
 	"coins":"05d07af9-105a-4572-99f6-a8e231c0daef",
 	"mods":"0e2235e7-babf-413c-9acf-f27cce5f059c",
@@ -45,6 +46,7 @@ const SERVER_FORMATS = {
 // Content types for export translation
 const SERVER_CONTENT_TYPES = {
 	"bibtex":"application/x-bibtex",
+	"biblatex":"application/x-bibtex",
 	"bookmarks":"text/html",
 	"coins":"text/html",
 	"mods":"application/mods+xml",
