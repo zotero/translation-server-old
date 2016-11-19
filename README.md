@@ -1,9 +1,20 @@
-Server-side Zotero translation using xpcshell
+# Zotero Translation Server
+
+Server-side Zotero translation
 
 Currently supports import, export, and web translation
 
-Building
-=============
+
+## Installation
+
+### Docker (recommended)
+
+1. `docker build -t translation-server -f Dockerfile .`
+1. `docker run --rm -p 1969:1969 --name translation-server-container translation-server`
+
+### Manually
+
+1. Install [required libraries](https://github.com/zotero/translation-server/blob/master/Dockerfile#L4)
 
 1. `git clone --recursive https://github.com/zotero/translation-server`
 
@@ -13,9 +24,6 @@ Building
 
 1. `./build.sh`
 
-Running
-=============
-
 1. Run the server:
 
    ```
@@ -24,7 +32,7 @@ Running
    zotero(3)(+0000000): HTTP server listening on *:1969
    ```
 
-1. Try a query!
+### Try a query
 
    ```
    $ curl -d '{"url":"http://www.tandfonline.com/doi/abs/10.1080/15424060903167229","sessionid":"abc123"}' \
@@ -32,15 +40,7 @@ Running
           127.0.0.1:1969/web
    ```
 
-Docker Container
-================
-
-1. `docker build -t translation-server -f Dockerfile .`
-1. `docker run --rm -p 1969:1969 --name translation-server-container translation-server`
-
-
-Endpoints
-=========
+## Endpoints
 
 Supported endpoints are: `/web`, `/import`, `/export`, and `/refresh`.
 
@@ -90,8 +90,7 @@ Converts items in Zotero API JSON format to a supported export format (RIS, BibT
 * query parameter: `format`, which must be a [supported export format](https://github.com/zotero/translation-server/blob/master/src/server_translation.js#L31-43)
 * request body: An array of items in Zotero API JSON format
 
-Tests
-=====
+## Tests
 
 To run the tests, go to the translation-server directory and run:
 ```
