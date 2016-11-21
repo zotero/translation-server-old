@@ -76,11 +76,19 @@ Zotero.Server.Translation = new function() {
 	this.init = function() {
 		// If "translatorsDirectory" pref is empty, default 
 		// to %CurProcD%/../modules/zotero/translators
+		Components.utils.import("resource://gre/modules/osfile.jsm");
 		this.translatorsDirPath = Zotero.Prefs.get("translatorsDirectory") ||
-			Components.classes["@mozilla.org/file/directory_service;1"]
-			.getService(Components.interfaces.nsIProperties)
-			.get("CurProcD", Components.interfaces.nsIFile)
-			.path + "/../modules/zotero/translators";
+			OS.Path.join(
+				OS.Path.dirname(
+					Components.classes["@mozilla.org/file/directory_service;1"]
+						.getService(Components.interfaces.nsIProperties)
+						.get("CurProcD", Components.interfaces.nsIFile)
+						.path
+				),
+				'modules',
+				'zotero',
+				'translators'
+			);
 		// Load translators
 		var translatorsDir = Components.classes["@mozilla.org/file/local;1"]
 			.createInstance(Components.interfaces.nsILocalFile);
