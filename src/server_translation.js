@@ -347,17 +347,16 @@ Zotero.Server.Translation.Import.prototype = {
 	"supportedMethods":["POST"],
 	
 	"init":function(url, data, sendResponseCallback) {
+		this.sendResponse = sendResponseCallback;
+		
 		if(!data) {
-			res.writeHead(400, "Bad Request", {'Content-Type': 'text/plain'});
-			res.end("No input provided\n");
+			this.sendResponse(400, "text/plain", "No input provided\n");
 			return;
 		}
 		
 		var translate = new Zotero.Translate.Import();
 		translate.noWait = true;
 		translate.setString(data);
-		this.sendResponse = sendResponseCallback;
-		
 		translate.setHandler("translators", this.translators.bind(this));
 		translate.setHandler("done", this.done.bind(this));
 		translate.getTranslators();
