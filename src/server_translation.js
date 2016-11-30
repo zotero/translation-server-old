@@ -315,10 +315,10 @@ Zotero.Server.Translation.Web.prototype = {
 		} else if(!translate.newItems) {
 			this.sendResponse(400, "text/plain", "Invalid input provided.\n");
 		} else {
-			var n = translate.newItems.length;
-			var items = new Array(n);
-			for(var i=0; i<n; i++) {
-				items[i] = Zotero.Utilities.itemToServerJSON(translate.newItems[i]);
+			let n = translate.newItems.length;
+			let items = [];
+			for (let i = 0; i < n; i++) {
+				items.push(...Zotero.Utilities.itemToServerJSON(translate.newItems[i]));
 			}
 			
 			this.sendResponse(200, "application/json", JSON.stringify(items));
