@@ -9,7 +9,12 @@ Currently supports import, export, and web translation
 
 ### Docker (recommended)
 
+1. `git clone --recursive https://github.com/zotero/translation-server`
+
+1. `cd translation-server`
+
 1. `docker build -t translation-server -f Dockerfile .`
+
 1. `docker run --rm -p 1969:1969 --name translation-server-container translation-server`
 
 ### Manually
