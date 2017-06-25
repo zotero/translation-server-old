@@ -1,5 +1,4 @@
 .*
-xulrunner*
 firefox*
 build
 *.log

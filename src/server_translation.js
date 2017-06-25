@@ -74,19 +74,15 @@ Zotero.Server.Translation = new function() {
 	 * Initializes translation server by reading files from local translators directory
 	 */
 	this.init = function() {
-		// If "translatorsDirectory" pref is empty, default 
-		// to %CurProcD%/../modules/zotero/translators
+		// If "translatorsDirectory" pref is empty, default to %CurProcD%/app/translators
 		Components.utils.import("resource://gre/modules/osfile.jsm");
-		this.translatorsDirPath = Zotero.Prefs.get("translatorsDirectory") ||
-			OS.Path.join(
-				OS.Path.dirname(
-					Components.classes["@mozilla.org/file/directory_service;1"]
-						.getService(Components.interfaces.nsIProperties)
-						.get("CurProcD", Components.interfaces.nsIFile)
-						.path
-				),
-				'modules',
-				'zotero',
+		this.translatorsDirPath = Zotero.Prefs.get("translatorsDirectory")
+			|| OS.Path.join(
+				Components.classes["@mozilla.org/file/directory_service;1"]
+					.getService(Components.interfaces.nsIProperties)
+					.get("CurProcD", Components.interfaces.nsIFile)
+					.path,
+				'app',
 				'translators'
 			);
 		// Load translators
@@ -206,18 +202,26 @@ Zotero.Server.Translation.Web.prototype = {
 			translate.setHandler("done", this.done.bind(this));
 			translate.setCookieSandbox(this._cookieSandbox);
 			
-			Zotero.HTTP.processDocuments([url.spec], function(doc) {
-				translate.setDocument(doc);
-				translate.getTranslators();
-			}, undefined, function(e) {
-				sendResponseCallback(500, "text/plain", "An error occurred retrieving the document\n");
-				Zotero.debug(e);
-			}, undefined, this._cookieSandbox);
+			Zotero.HTTP.processDocuments(
+				[url.spec],
+				(doc) => {
+					translate.setDocument(doc);
+					return translate.getTranslators();
+				},
+				undefined,
+				(e) => {
+					sendResponseCallback(500, "text/plain", "An error occurred retrieving the document\n");
+					Zotero.debug(e);
+				},
+				undefined,
+				this._cookieSandbox
+			);
 		}
 		
 		// GC every 10 requests
 		if((++Zotero.Server.Translation.requestsSinceSelectionCollection) == 10) {
-			for each(var instance in Zotero.Server.Translation.waitingForSelection) {
+			for (let i in Zotero.Server.Translation.waitingForSelection) {
+				let instance = Zotero.Server.Translation.waitingForSelection[i];
 				instance.collect();
 			}
 			Zotero.Server.Translation.requestsSinceSelectionCollection = 0;
@@ -246,7 +250,9 @@ Zotero.Server.Translation.Web.prototype = {
 		}
 		
 		translate.setTranslator(translators[0]);
-		translate.translate(false);
+		translate.translate({
+			libraryID: false
+		});
 	},
 	
 	/**
@@ -354,8 +360,12 @@ Zotero.Server.Translation.Import.prototype = {
 			return;
 		}
 		
+		// Content-Type: application/json comes in as an object, but Zotero.Translate only takes strings
+		if (typeof data == 'object') {
+			data = JSON.stringify(data);
+		}
+		
 		var translate = new Zotero.Translate.Import();
-		translate.noWait = true;
 		translate.setString(data);
 		translate.setHandler("translators", this.translators.bind(this));
 		translate.setHandler("done", this.done.bind(this));
@@ -372,7 +382,9 @@ Zotero.Server.Translation.Import.prototype = {
 		}
 		
 		translate.setTranslator(translators[0]);
-		translate.translate(false);
+		translate.translate({
+			libraryID: false
+		});
 	},
 	
 	/**

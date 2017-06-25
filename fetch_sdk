@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-SDK_VERSION=${SDK_VERSION:-48.0.2}
+SDK_VERSION=${SDK_VERSION:-52.2.0esr}
 case "$(uname -s)" in
    Darwin)
 	   if [[ "$(uname -m)" != 'x86_64' ]];then

@@ -25,14 +25,12 @@
 
 const ZOTERO_CONFIG = {
 	GUID: 'zotero@chnm.gmu.edu',
-	DB_REBUILD: false, // erase DB and recreate from schema
 	REPOSITORY_URL: 'https://repo.zotero.org/repo',
 	REPOSITORY_CHECK_INTERVAL: 86400, // 24 hours
 	REPOSITORY_RETRY_INTERVAL: 3600, // 1 hour
 	REPOSITORY_CHANNEL: 'trunk',
 	BASE_URI: 'http://zotero.org/',
-	WWW_BASE_URL: 'http://www.zotero.org/',
-	SYNC_URL: 'https://sync.zotero.org/',
+	WWW_BASE_URL: 'https://www.zotero.org/',
 	API_URL: 'https://api.zotero.org/',
 	PREF_BRANCH: 'translation-server.'
 };
@@ -45,13 +43,14 @@ Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 (function(){
 	var _runningTimers = [];
 	this.isFx = true;
-	this.isFx4 = true;
-	this.isFx5 = true;
 	this.isServer = true;
 	this.browser = "v";
 	// Fake the XULRunner version number for now, since Components.interfaces.nsIXULAppInfo
 	// isn't supported in XULRunner
-	this.platformMajorVersion = 41;
+	this.platformMajorVersion = 52;
+	
+	Components.utils.import('resource://zotero/require.js');
+	this.Promise = require('resource://zotero/bluebird.js');
 	
 	this.init = function(port) {
 		// ensure browser is online
@@ -121,9 +120,11 @@ Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 	 * @namespace
 	 */
 	var ConsoleListener = {
-		"QueryInterface":XPCOMUtils.generateQI([Components.interfaces.nsIConsoleMessage,
-			Components.interfaces.nsISupports]),
-		"observe":function(err) {
+		QueryInterface: XPCOMUtils.generateQI([
+			Components.interfaces.nsIConsoleListener,
+			Components.interfaces.nsISupports
+		]),
+		observe: function (err) {
 			const skip = ['CSS Parser', 'content javascript'];
 			
 			try {
@@ -133,10 +134,30 @@ Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 				}
 				Zotero.debug(err.message+" at "+err.fileName+":"+err.lineNumber);
 			} catch (e) {
-				Zotero.debug(eerr.toString());
+				Zotero.debug(err.toString());
 				return;
 			}
 		}
+	};
+	
+	
+	/**
+	 * Generate a function that produces a static output
+	 *
+	 * Zotero.lazy(fn) returns a function. The first time this function
+	 * is called, it calls fn() and returns its output. Subsequent
+	 * calls return the same output as the first without calling fn()
+	 * again.
+	 */
+	this.lazy = function(fn) {
+		var x, called = false;
+		return function() {
+			if(!called) {
+				x = fn.apply(this);
+				called = true;
+			}
+			return x;
+		};
 	};
 }).call(Zotero);
 

@@ -63,7 +63,8 @@ Zotero.CookieSandbox.prototype.clearTimeout = function() {
  * Load one or more documents in a hidden browser
  *
  * @param {String|String[]} urls URL(s) of documents to load
- * @param {Function} processor Callback to be executed for each document loaded
+ * @param {Function} processor - Callback to be executed for each document loaded; if function returns
+ *     a promise, it's waited for before continuing
  * @param {Function} done Callback to be executed after all documents have been loaded
  * @param {Function} exception Callback to be executed if an exception occurs
  * @param {Boolean} dontDelete Unused.
@@ -119,16 +120,32 @@ Zotero.HTTP.processDocuments = function(urls, processor, done, exception, dontDe
 	 * @inner
 	 */
 	var onLoad = function() {
-		var doc = xmlhttp.response;		
+		var doc = xmlhttp.response;
 		if(doc || !exception) {
 			try {
 				doc = Zotero.HTTP.wrapDocument(doc, url);
-				processor(doc);
-			} catch(e) {
-				if(exception) {
+				let maybePromise = processor(doc);
+				
+				// If processor returns a promise, wait for it
+				if (maybePromise && maybePromise.then) {
+					maybePromise.then(() => doLoad())
+					.catch(e => {
+						if (exception) {
+							exception(e);
+						}
+						else {
+							throw e;
+						}
+					});
+					return;
+				}
+			}
+			catch(e) {
+				if (exception) {
 					exception(e);
 					return;
-				} else {
+				}
+				else {
 					throw(e);
 				}
 			}
@@ -152,3 +169,11 @@ Zotero.HTTP.processDocuments = function(urls, processor, done, exception, dontDe
 	
 	doLoad();
 }
+
+Zotero.Proxies = {
+	getPotentialProxies: function (uri) {
+		return {
+			uri: null
+		};
+	}
+};

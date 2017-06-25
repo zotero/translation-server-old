@@ -2,90 +2,130 @@
 set -euo pipefail
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-EXTENSIONDIR="$SCRIPT_DIR/modules/zotero"
-FIREFOXSDKDIR="$SCRIPT_DIR/firefox-sdk"
 
-XPCOMDIR="$EXTENSIONDIR/chrome/content/zotero/xpcom"
-BUILDDIR="$SCRIPT_DIR/build"
-ASSETSDIR="$SCRIPT_DIR/assets"
 
-rm -rf "$BUILDDIR"
-mkdir "$BUILDDIR"
+function usage {
+	cat >&2 <<DONE
+Usage: $0 [-d DIR] [-c DIR]
+Options
+ -d DIR              Zotero client build directory to build from instead of using submodule
+ -c DIR              Connector directory to build from instead of using submodule
+DONE
+	exit 1
+}
 
-BINSDKDIR="$FIREFOXSDKDIR/sdk/bin"
-BINDIR="$FIREFOXSDKDIR/bin"
+EXTENSION_DIR="$SCRIPT_DIR/modules/zotero/build"
+CONNECTOR_DIR="$SCRIPT_DIR/modules/zotero-connectors"
+while getopts "d:c:" opt; do
+	case $opt in
+		d)
+			EXTENSION_DIR="$OPTARG"
+			;;
+		c)
+			CONNECTOR_DIR="$OPTARG"
+			;;
+		*)
+			usage
+			;;
+	esac
+	shift $((OPTIND-1)); OPTIND=1
+done
+
+FIREFOX_SDK_DIR="$SCRIPT_DIR/firefox-sdk"
+
+XPCOM_DIR="$EXTENSION_DIR/chrome/content/zotero/xpcom"
+BUILD_DIR="$SCRIPT_DIR/build"
+ASSETS_DIR="$SCRIPT_DIR/assets"
+
+rm -rf "$BUILD_DIR"
+mkdir "$BUILD_DIR"
+
+BIN_SDK_DIR="$FIREFOX_SDK_DIR/sdk/bin"
+BIN_DIR="$FIREFOX_SDK_DIR/bin"
 
 if [ `uname -s` = "Darwin" ]; then
-	cp -R "$FIREFOXSDKDIR/bin/Firefox.app/Contents/Resources/omni.ja" \
-		"$FIREFOXSDKDIR"/bin/Firefox.app/Contents/MacOS/XUL \
-		"$FIREFOXSDKDIR"/bin/Firefox.app/Contents/MacOS/lib* \
-		"$FIREFOXSDKDIR"/bin/Firefox.app/Contents/Resources/icudt56l.dat \
-		"$BUILDDIR"
+	cp -R "$FIREFOX_SDK_DIR/bin/Firefox.app/Contents/Resources/omni.ja" \
+		"$FIREFOX_SDK_DIR"/bin/Firefox.app/Contents/MacOS/XUL \
+		"$FIREFOX_SDK_DIR"/bin/Firefox.app/Contents/MacOS/lib* \
+		"$FIREFOX_SDK_DIR"/bin/Firefox.app/Contents/Resources/icudt58l.dat \
+		"$BUILD_DIR"
 else
-	cp "$BINDIR/omni.ja" \
-		"$BINDIR/icudt56l.dat" \
-		"$BINDIR/"lib* \
-		"$BUILDDIR"
+	cp "$BIN_DIR/omni.ja" \
+		"$BIN_DIR/icudt58l.dat" \
+		"$BIN_DIR/"lib* \
+		"$BUILD_DIR"
 fi
 
-cp -p "$ASSETSDIR/run_translation-server.sh" "$BUILDDIR"
-mkdir -p "$BUILDDIR/defaults/pref"
+cp -Rp "$ASSETS_DIR"/* "$BUILD_DIR"
+mkdir -p "$BUILD_DIR/defaults/pref"
 
-if [ -e "$BINDIR/XUL" ]; then
-	cp "$BINDIR/XUL" "$BUILDDIR"
+if [ -e "$BIN_DIR/XUL" ]; then
+	cp "$BIN_DIR/XUL" "$BUILD_DIR"
 fi
-if [ -e "$BINSDKDIR/xpcshell.exe" ]; then
-	cp "$BINSDKDIR/xpcshell.exe" \
-		"$BINDIR/"*.dll \
-		"$BUILDDIR"
-	chmod a+x "$BUILDDIR/xpcshell.exe"
+if [ -e "$BIN_SDK_DIR/xpcshell.exe" ]; then
+	cp "$BIN_SDK_DIR/xpcshell.exe" \
+		"$BIN_DIR/"*.dll \
+		"$BUILD_DIR"
+	chmod a+x "$BUILD_DIR/xpcshell.exe"
 else
-	cp "$BINSDKDIR/xpcshell" "$BUILDDIR"
-	chmod a+x "$BUILDDIR/xpcshell"
+	cp "$BIN_SDK_DIR/xpcshell" "$BUILD_DIR"
+	chmod a+x "$BUILD_DIR/xpcshell"
 fi
 
-mkdir "$BUILDDIR/translation-server"
-cp -R "$SCRIPT_DIR/src/"* \
-	"$XPCOMDIR/rdf" \
-	"$XPCOMDIR/cookieSandbox.js" \
-	"$XPCOMDIR/date.js" \
-	"$XPCOMDIR/debug.js" \
-	"$XPCOMDIR/file.js" \
-	"$XPCOMDIR/http.js" \
-	"$XPCOMDIR/openurl.js" \
-	"$XPCOMDIR/server.js" \
-	"$XPCOMDIR/utilities.js" \
-	"$XPCOMDIR/utilities_translate.js" \
-	"$XPCOMDIR/xregexp" \
-	"$EXTENSIONDIR/chrome/content/zotero/tools/testTranslators/translatorTester.js" \
-	"$BUILDDIR/translation-server"
+mkdir "$BUILD_DIR/app"
+# Copy server files
+cp -R "$SCRIPT_DIR/src/"* "$BUILD_DIR/app"
+# Copy client XPCOM files
+cp -R "$XPCOM_DIR/rdf" \
+	"$XPCOM_DIR/cookieSandbox.js" \
+	"$XPCOM_DIR/date.js" \
+	"$XPCOM_DIR/debug.js" \
+	"$XPCOM_DIR/file.js" \
+	"$XPCOM_DIR/http.js" \
+	"$XPCOM_DIR/openurl.js" \
+	"$XPCOM_DIR/server.js" \
+	"$XPCOM_DIR/utilities.js" \
+	"$XPCOM_DIR/utilities_translate.js" \
+	"$XPCOM_DIR/xregexp" \
+	"$EXTENSION_DIR/chrome/content/zotero/tools/testTranslators/translatorTester.js" \
+	"$BUILD_DIR/app"
 
-mkdir "$BUILDDIR/translation-server/connector"
-cp -R "$XPCOMDIR/connector/cachedTypes.js" \
-	"$XPCOMDIR/connector/translator.js" \
-	"$XPCOMDIR/connector/typeSchemaData.js" \
-	"$BUILDDIR/translation-server/connector"
+# Copy client resource files
+mkdir "$BUILD_DIR/app/resource"
+cp -R "$EXTENSION_DIR/resource/require.js" \
+	"$EXTENSION_DIR/resource/bluebird.js" \
+	"$EXTENSION_DIR/resource/bluebird" \
+	"$BUILD_DIR/app/resource"
 
-mkdir "$BUILDDIR/translation-server/translation"
-cp -R "$XPCOMDIR/translation/tlds.js" \
-	"$XPCOMDIR/translation/translate.js" \
-	"$XPCOMDIR/translation/translate_firefox.js" \
-	"$BUILDDIR/translation-server/translation"
+# Copy client translation files
+mkdir "$BUILD_DIR/app/translation"
+cp -R "$XPCOM_DIR/translation/tlds.js" \
+	"$XPCOM_DIR/translation/translate.js" \
+	"$XPCOM_DIR/translation/translator.js" \
+	"$XPCOM_DIR/translation/translate_firefox.js" \
+	"$BUILD_DIR/app/translation"
 
-mkdir "$BUILDDIR/translation-server/resource"
-cp -R "$EXTENSIONDIR/resource/q.js" "$BUILDDIR/translation-server/resource"
+# Copy connector files
+mkdir "$BUILD_DIR/app/connector"
+cp -R "$CONNECTOR_DIR/src/common/cachedTypes.js" \
+	"$CONNECTOR_DIR/src/common/translators.js" \
+	"$BUILD_DIR/app/connector"
+cp "$EXTENSION_DIR/resource/schema/connectorTypeSchemaData.js" \
+	"$BUILD_DIR/app/connector/typeSchemaData.js"
 
-cp "$SCRIPT_DIR/config.js" "$BUILDDIR/defaults/pref"
-echo "content translation-server translation-server/" >> "$BUILDDIR/chrome.manifest"
-echo "resource zotero translation-server/resource/" >> "$BUILDDIR/chrome.manifest"
+cp "$SCRIPT_DIR/config.js" "$BUILD_DIR/defaults/pref"
+echo "content translation-server app/" >> "$BUILD_DIR/chrome.manifest"
+echo "resource zotero app/resource/" >> "$BUILD_DIR/chrome.manifest"
+echo "locale branding en-US chrome/branding/locale/" >> "$BUILD_DIR/chrome.manifest"
 
-# Uncomment to enable Venkman
-#mkdir "$RESDIR/extensions"
-#cp "$SCRIPT_DIR/{f13b157f-b174-47e7-a34d-4815ddfdfeb8}.xpi" "$RESDIR/extensions"
+# Copy translators (not applicable to Docker build)
+if [ -d "$SCRIPT_DIR/modules/zotero/translators/" ]; then
+	rsync -a --delete "$SCRIPT_DIR/modules/zotero/translators/" "$BUILD_DIR/app/translators/"
+fi
 
 # Add preferences
-#cp -r "$EXTENSIONDIR/defaults" "$RESDIR"
-#cp -r "$SCRIPT_DIR/config.js" "$ASSETSDIR/prefs.js" "$RESDIR/defaults/preferences"
+#cp -r "$EXTENSION_DIR/defaults" "$RESDIR"
+#cp -r "$SCRIPT_DIR/config.js" "$ASSETS_DIR/prefs.js" "$RESDIR/defaults/preferences"
 #perl -pi -e 's/pref\("extensions\.zotero\.httpServer\.enabled", false\);/pref("extensions.zotero.httpServer.enabled", true);/g' "$RESDIR/defaults/preferences/zotero.js"
 #perl -pi -e 's/pref\("extensions\.zotero\.httpServer\.port",[^\)]*\);//g' "$RESDIR/defaults/preferences/zotero.js"
 #perl -pi -e 's/pref\("extensions\.zotero\.debug\.log",\s*false\);//g' "$RESDIR/defaults/preferences/zotero.js"
@@ -93,6 +133,8 @@ echo "resource zotero translation-server/resource/" >> "$BUILDDIR/chrome.manifes
 #perl -pi -e 's/pref\("extensions\.zotero\.debug\.time",[^\)]*\);//g' "$RESDIR/defaults/preferences/zotero.js"
 #perl -pi -e 's/extensions.zotero/translation-server/g' "$RESDIR/defaults/preferences/zotero.js"
 
-find "$BUILDDIR" -depth -type d -name .svn -exec rm -rf {} \;
-find "$BUILDDIR" -name .DS_Store -exec rm -rf \;
-find "$BUILDDIR" -name '._*' -exec rm -rf \;
+find "$BUILD_DIR" -depth -type d -name .svn -exec rm -rf {} \;
+find "$BUILD_DIR" -name .DS_Store -exec rm -rf \;
+find "$BUILD_DIR" -name '._*' -exec rm -rf \;
+
+echo "Done"

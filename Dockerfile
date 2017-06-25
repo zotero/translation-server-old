@@ -1,18 +1,46 @@
-FROM ubuntu:14.04
+FROM ubuntu:17.10
 
 RUN apt-get update \
-	&& apt-get install -y git acl at-spi2-core ca-certificates colord dbus dconf-gsettings-backend dconf-service fontconfig fontconfig-config fonts-dejavu-core hicolor-icon-theme krb5-locales libapparmor1 libasound2 libasound2-data libatk-bridge2.0-0 libatk1.0-0 libatk1.0-data libatspi2.0-0 libavahi-client3 libavahi-common-data libavahi-common3 libcairo-gobject2 libcairo2 libcanberra0 libcolord1 libcolorhug1 libcups2 libdatrie1 libdbus-glib-1-2 libdbusmenu-glib4 libdbusmenu-gtk4 libdconf1 libexif12 libfontconfig1 libfreetype6 libgd3 libgdk-pixbuf2.0-0 libgdk-pixbuf2.0-common libglib2.0-0 libglib2.0-data libgphoto2-6 libgphoto2-l10n libgphoto2-port10 libgraphite2-3 libgssapi-krb5-2 libgtk-3-0 libgtk-3-bin libgtk-3-common libgtk2.0-0 libgtk2.0-bin libgtk2.0-common libgudev-1.0-0 libgusb2 libharfbuzz0b libice6 libidn11 libieee1284-3 libjasper1 libjbig0 libjpeg-turbo8 libjpeg8 libk5crypto3 libkeyutils1 libkrb5-3 libkrb5support0 liblcms2-2 libltdl7 libogg0 libpam-systemd libpango-1.0-0 libpangocairo-1.0-0 libpangoft2-1.0-0 libpixman-1-0 libpolkit-agent-1-0 libpolkit-backend-1-0 libpolkit-gobject-1-0 libsane libsane-common libsm6 libstartup-notification0 libsystemd-daemon0 libsystemd-login0 libtdb1 libthai-data libthai0 libtiff5 libusb-1.0-0 libv4l-0 libv4lconvert0 libvorbis0a libvorbisfile3 libvpx1 libwayland-client0 libwayland-cursor0 libx11-6 libx11-data libx11-xcb1 libxau6 libxcb-render0 libxcb-shm0 libxcb-util0 libxcb1 libxcomposite1 libxcursor1 libxdamage1 libxdmcp6 libxext6 libxfixes3 libxi6 libxinerama1 libxkbcommon0 libxml2 libxpm4 libxrandr2 libxrender1 libxt6 libxtst6 openssl policykit-1 sgml-base shared-mime-info sound-theme-freedesktop systemd-services systemd-shim wget x11-common xml-core \
-	&& rm -rf /var/lib/apt/lists
+	                                                    # libgtk-3.0 libraries for Firefox
+	&& apt-get install -y bzip2 git rsync wget xz-utils adwaita-icon-theme at-spi2-core dbus dconf-gsettings-backend dconf-service fontconfig fontconfig-config fonts-dejavu-core glib-networking glib-networking-common glib-networking-services gsettings-desktop-schemas gtk-update-icon-cache hicolor-icon-theme humanity-icon-theme krb5-locales libapparmor1 libatk-bridge2.0-0 libatk1.0-0 libatk1.0-data libatspi2.0-0 libavahi-client3 libavahi-common-data libavahi-common3 libboost-filesystem1.62.0 libboost-system1.62.0 libbsd0 libcairo-gobject2 libcairo2 libcapnp-0.5.3 libcolord2 libcroco3 libcups2 libdatrie1 libdbus-1-3 libdconf1 libdrm-amdgpu1 libdrm-intel1 libdrm-nouveau2 libdrm-radeon1 libdrm2 libedit2 libegl1-mesa libelf1 libepoxy0 libexpat1 libffi6 libfontconfig1 libfreetype6 libgbm1 libgdk-pixbuf2.0-0 libgdk-pixbuf2.0-bin libgdk-pixbuf2.0-common libgl1-mesa-dri libglapi-mesa libglib2.0-0 libglib2.0-data libgmp10 libgnutls30 libgraphite2-3 libgssapi-krb5-2 libgtk-3-bin libgtk-3-common libharfbuzz0b libhogweed4 libicu57 libidn11 libjbig0 libjpeg-turbo8 libjpeg8 libjson-glib-1.0-0 libjson-glib-1.0-common libk5crypto3 libkeyutils1 libkrb5-3 libkrb5support0 liblcms2-2 libllvm4.0 libmirclient9 libmircommon7 libmircore1 libmirprotobuf3 libnettle6 libp11-kit0 libpango-1.0-0 libpangocairo-1.0-0 libpangoft2-1.0-0 libpciaccess0 libpixman-1-0 libpng16-16 libprotobuf-lite10 libproxy1v5 librest-0.7-0 librsvg2-2 librsvg2-common libsensors4 libsoup-gnome2.4-1 libsoup2.4-1 libtasn1-6 libthai-data libthai0 libtiff5 libtxc-dxtn-s2tc libwayland-client0 libwayland-cursor0 libwayland-egl1-mesa libwayland-server0 libx11-6 libx11-data libx11-xcb1 libxau6 libxcb-dri2-0 libxcb-dri3-0 libxcb-present0 libxcb-render0 libxcb-shm0 libxcb-sync1 libxcb-xfixes0 libxcb1 libxcomposite1 libxcursor1 libxdamage1 libxdmcp6 libxext6 libxfixes3 libxi6 libxinerama1 libxkbcommon0 libxml2 libxrandr2 libxrender1 libxshmfence1 libxtst6 sgml-base shared-mime-info ubuntu-mono ucf x11-common xdg-user-dirs xkb-data xml-core libdbus-glib-1-2 libxt6 \
+	&& rm -rf /var/lib/apt/lists \
+	# Install node and npm
+	&& mkdir /tmp/node-build \
+	&& cd /tmp/node-build \
+	&& wget --quiet -O node.xz https://nodejs.org/dist/v8.1.2/node-v8.1.2-linux-x64.tar.xz \
+	&& tar xf node.xz \
+	&& mv node-v8.1.2-linux-x64/bin/node /usr/bin/ \
+	&& node-v8.1.2-linux-x64/bin/npm install -g npm \
+	&& cd \
+	&& rm -rf /tmp/node-build
 
 WORKDIR /opt/translation-server
 COPY . .
 
-RUN bash fetch_sdk \
+# Build Zotero client from submodule and delete non-build files
+RUN cd /opt/translation-server/modules/zotero \
+	&& npm i \
+	&& npm run build \
+	&& rsync -aL --exclude test --exclude translators build/ /tmp/zotero-build/ \
+	&& cd .. \
+	&& rm -rf zotero \
+	&& mkdir zotero \
+	&& mv /tmp/zotero-build zotero/build \
+	
+	# Build translation-server and make build files the main dir
+	&& cd /opt/translation-server \
+	&& bash fetch_sdk \
 	&& bash build.sh \
 	&& rm -rf firefox-sdk \
-	&& rm -rf /opt/translation-server/modules/zotero/translators \
-	&& git clone https://github.com/zotero/translators /opt/translation-server/modules/zotero/translators
+	&& cd .. \
+	&& mv translation-server/build translation-server2 \
+	&& rm -rf translation-server \
+	&& mv translation-server2 translation-server \
+	&& cd translation-server \
+	
+	# Create translators repository
+	&& git clone https://github.com/zotero/translators app/translators
 
 EXPOSE 1969
 
-ENTRYPOINT build/run_translation-server.sh
+ENTRYPOINT ./run_translation-server.sh
