@@ -41,6 +41,8 @@ RUN cd /opt/translation-server/modules/zotero \
 	# Create translators repository
 	&& git clone https://github.com/zotero/translators app/translators
 
+ARG TRANSLATION_SERVER_REVISION=SOURCE
+ENV TRANSLATION_SERVER_REVISION $TRANSLATION_SERVER_REVISION
 EXPOSE 1969
 
 ENTRYPOINT ./run_translation-server.sh
