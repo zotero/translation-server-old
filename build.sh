@@ -77,6 +77,8 @@ mkdir "$BUILD_DIR/app"
 cp -R "$SCRIPT_DIR/src/"* "$BUILD_DIR/app"
 # Copy client XPCOM files
 cp -R "$XPCOM_DIR/rdf" \
+	"$XPCOM_DIR/citeproc-prereqs.js" \
+	"$XPCOM_DIR/citeproc.js" \
 	"$XPCOM_DIR/cookieSandbox.js" \
 	"$XPCOM_DIR/date.js" \
 	"$XPCOM_DIR/debug.js" \
@@ -96,6 +98,10 @@ cp -R "$EXTENSION_DIR/resource/require.js" \
 	"$EXTENSION_DIR/resource/bluebird.js" \
 	"$EXTENSION_DIR/resource/bluebird" \
 	"$BUILD_DIR/app/resource"
+
+mkdir "$BUILD_DIR/app/resource/schema"
+cp -RL "$EXTENSION_DIR/resource/schema/dateFormats.json" \
+	"$BUILD_DIR/app/resource/schema"
 
 # Copy client translation files
 mkdir "$BUILD_DIR/app/translation"

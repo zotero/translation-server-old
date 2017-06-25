@@ -25,6 +25,7 @@
 
 const ZOTERO_CONFIG = {
 	GUID: 'zotero@chnm.gmu.edu',
+	ID: 'translation-server',
 	REPOSITORY_URL: 'https://repo.zotero.org/repo',
 	REPOSITORY_CHECK_INTERVAL: 86400, // 24 hours
 	REPOSITORY_RETRY_INTERVAL: 3600, // 1 hour
@@ -45,6 +46,7 @@ Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 	this.isFx = true;
 	this.isServer = true;
 	this.browser = "v";
+	this.locale = 'en-US';
 	// Fake the XULRunner version number for now, since Components.interfaces.nsIXULAppInfo
 	// isn't supported in XULRunner
 	this.platformMajorVersion = 52;
@@ -52,7 +54,7 @@ Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 	Components.utils.import('resource://zotero/require.js');
 	this.Promise = require('resource://zotero/bluebird.js');
 	
-	this.init = function(port) {
+	this.init = async function (port) {
 		// ensure browser is online
 		var io = Components.classes['@mozilla.org/network/io-service;1']
 			.getService(Components.interfaces.nsIIOService);
@@ -64,6 +66,7 @@ Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 		
 		Zotero.Prefs.init();
 		Zotero.Debug.init();
+		await Zotero.Date.init();
 		Zotero.Connector_Types.init();
 		Zotero.Server.Translation.init();
 		if(port !== false) {
