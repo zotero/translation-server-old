@@ -114,35 +114,34 @@ var mainThread = Components.classes["@mozilla.org/thread-manager;1"]
 		.getService(Components.interfaces.nsIThreadManager).currentThread;
 
 if(arguments[0] === "-test" && arguments[1]) {
-	Zotero.init(false);
-	subscriptLoader.loadSubScript("chrome://translation-server/content/translatorTester.js");
-	// Override TEST_RUN_TIMEOUT from translatorTester.js
-	TEST_RUN_TIMEOUT = SERVER_TRANSLATION_TIMEOUT*1000;
+	let shouldExit = false;
+	let outputFile = Zotero.File.pathToFile(arguments[1]);
 	
-	// Get file to write to
-	var outfile = Components.classes["@mozilla.org/file/local;1"].
-			createInstance(Components.interfaces.nsILocalFile);
-	outfile.initWithPath(arguments[1]);
-	
-	var shouldExit = false;
-	
-	function writeData(results, last) {
-		var data = {
-			browser: "v",
-			results
-		};
+	Zotero.init(false)
+	.then(function () {
+		subscriptLoader.loadSubScript("chrome://translation-server/content/translatorTester.js");
+		// Override TEST_RUN_TIMEOUT from translatorTester.js
+		TEST_RUN_TIMEOUT = SERVER_TRANSLATION_TIMEOUT*1000;
 		
-		try {
-			Zotero.File.putContents(outfile, JSON.stringify(data, null, "\t"));
-		} catch(e) {
-			Zotero.debug(e);
+		function writeData(results, last) {
+			var data = {
+				browser: "v",
+				results
+			};
+			
+			try {
+				Zotero.File.putContents(outputFile, JSON.stringify(data, null, "\t"));
+			} catch(e) {
+				Zotero.debug(e);
+			}
+			if (last) {
+				shouldExit = true;
+			}
 		}
-		if (last) {
-			shouldExit = true;
-		}
-	}
+		
+		Zotero_TranslatorTesters.runAllTests(32, {}, writeData);
+	});
 	
-	Zotero_TranslatorTesters.runAllTests(32, {}, writeData);
 	while(!shouldExit) mainThread.processNextEvent(true);
 } else {
 	Zotero.init(arguments[0] === "-port" ? arguments[1] : undefined);
