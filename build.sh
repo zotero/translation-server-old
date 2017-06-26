@@ -87,6 +87,7 @@ cp -R "$XPCOM_DIR/rdf" \
 	"$XPCOM_DIR/openurl.js" \
 	"$XPCOM_DIR/server.js" \
 	"$XPCOM_DIR/utilities.js" \
+	"$XPCOM_DIR/utilities_internal.js" \
 	"$XPCOM_DIR/utilities_translate.js" \
 	"$XPCOM_DIR/xregexp" \
 	"$EXTENSION_DIR/chrome/content/zotero/tools/testTranslators/translatorTester.js" \
