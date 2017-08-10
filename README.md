@@ -25,15 +25,15 @@ docker run --rm -p 1969:1969 zotero/translation-server
 
 1. `docker run --rm -p 1969:1969 translation-server`
 
-You can test changes without rebuilding the image each time. First, run `./fetch_sdk` once to install the Firefox SDK. (The SDK won’t be used in your build, but it’s required by the build script.) Then, after each change, run the build script and a modified `docker run`:
+You can test changes without rebuilding the image each time. First, run `./fetch_sdk` once to install the Firefox SDK. (The SDK won’t be used in your build, but it’s required by the build script.) Next, compile the client code into `./modules/zotero/build` by running `npm i` and `npm run build` from `./modules/zotero`. Then, after each change, run the translation-server build script and a modified `docker run`:
 
 ``
 ./build.sh && docker run -ti --rm -v `pwd`/build/app/:/opt/translation-server/app/ translation-server
 ``
 
-This will copy files from `src`, `modules/zotero/build`, `modules/zotero-connectors` into `build` and mount that directory in the container in place of the directory created during the `docker build` step above.
+This will copy files from `src`, `modules/zotero/build`, and `modules/zotero-connectors` into `build` and mount that directory in the container in place of the directory created during the `docker build` step above.
 
-If you’re changing files in the main Zotero repository, be sure to run `npm start` there and leave it running as you make changes to keeps its `build` subdirectory up to date. If you already have Zotero or Zotero Connector repositories on your system, you can pass `-d ~/zotero-client/build` or `-c ~/zotero-connectors` to `./build.sh` above to use those directories instead of the submodules used by default.
+If you’re changing files in the main Zotero repository, you can run `npm start` in `./modules/zotero` and leave it running as you make changes to keeps its `build` subdirectory up to date. If you already have Zotero or Zotero Connector repositories on your system, you can pass `-d ~/zotero-client/build` or `-c ~/zotero-connectors` to `./build.sh` above to use those directories instead of the submodules used by default.
 
 To inspect the container before running the server, include `--entrypoint /bin/bash` in the `docker run` command.
 
