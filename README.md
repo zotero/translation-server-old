@@ -28,7 +28,7 @@ docker run --rm -p 1969:1969 zotero/translation-server
 You can test changes without rebuilding the image each time. First, run `./fetch_sdk` once to install the Firefox SDK. (The SDK won’t be used in your build, but it’s required by the build script.) Next, compile the client code into `./modules/zotero/build` by running `npm i` and `npm run build` from `./modules/zotero`. Then, after each change, run the translation-server build script and a modified `docker run`:
 
 ``
-./build.sh && docker run -ti --rm -v `pwd`/build/app/:/opt/translation-server/app/ translation-server
+./build.sh && docker run -p 1969:1969 -ti --rm -v `pwd`/build/app/:/opt/translation-server/app/ translation-server
 ``
 
 This will copy files from `src`, `modules/zotero/build`, and `modules/zotero-connectors` into `build` and mount that directory in the container in place of the directory created during the `docker build` step above.
