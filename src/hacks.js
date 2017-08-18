@@ -173,7 +173,7 @@ Zotero.HTTP.processDocuments = function(urls, processor, done, exception, dontDe
 Zotero.Proxies = {
 	getPotentialProxies: function (uri) {
 		return {
-			uri: null
+			[uri]: null
 		};
 	}
 };
