@@ -48,6 +48,7 @@ const xpcomFiles = [
 	'connector/cachedTypes',
 	'connector/translators',
 	'connector/typeSchemaData',
+	'connector/utilities',
 	'hacks'
 ];
 

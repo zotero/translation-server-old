@@ -326,7 +326,7 @@ Zotero.Server.Translation.Web.prototype = {
 			let n = translate.newItems.length;
 			let items = [];
 			for (let i = 0; i < n; i++) {
-				items.push(...Zotero.Utilities.itemToServerJSON(translate.newItems[i]));
+				items.push(...Zotero.Utilities.itemToAPIJSON(translate.newItems[i]));
 			}
 			
 			this.sendResponse(200, "application/json", JSON.stringify(items));
@@ -401,7 +401,7 @@ Zotero.Server.Translation.Import.prototype = {
 			var n = translate.newItems.length;
 			var items = new Array(n);
 			for(var i=0; i<n; i++) {
-				items[i] = Zotero.Utilities.itemToServerJSON(translate.newItems[i]);
+				items[i] = Zotero.Utilities.itemToAPIJSON(translate.newItems[i]);
 			}
 			
 			this.sendResponse(200, "application/json", JSON.stringify(items));

@@ -116,6 +116,7 @@ cp -R "$XPCOM_DIR/translation/tlds.js" \
 mkdir "$BUILD_DIR/app/connector"
 cp -R "$CONNECTOR_DIR/src/common/cachedTypes.js" \
 	"$CONNECTOR_DIR/src/common/translators.js" \
+	"$CONNECTOR_DIR/src/common/utilities.js" \
 	"$BUILD_DIR/app/connector"
 cp "$EXTENSION_DIR/resource/schema/connectorTypeSchemaData.js" \
 	"$BUILD_DIR/app/connector/typeSchemaData.js"
