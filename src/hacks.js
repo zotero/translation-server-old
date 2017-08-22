@@ -60,115 +60,20 @@ Zotero.CookieSandbox.prototype.clearTimeout = function() {
 };
 
 /**
- * Load one or more documents in a hidden browser
- *
- * @param {String|String[]} urls URL(s) of documents to load
- * @param {Function} processor - Callback to be executed for each document loaded; if function returns
- *     a promise, it's waited for before continuing
- * @param {Function} done Callback to be executed after all documents have been loaded
- * @param {Function} exception Callback to be executed if an exception occurs
- * @param {Boolean} dontDelete Unused.
- * @param {Zotero.CookieSandbox} [cookieSandbox] Cookie sandbox object
- * @return {browser} Hidden browser used for loading
+ * Override defaults for HTTP requests
  */
-Zotero.HTTP.processDocuments = function(urls, processor, done, exception, dontDelete, cookieSandbox) {
-	var xmlhttp = Components.classes["@mozilla.org/xmlextras/xmlhttprequest;1"].createInstance();
-	xmlhttp.mozBackgroundRequest = true;
-	
-	if(typeof urls === "string") urls = [urls];
-					
-	/**
-	 * Loads the next page
-	 * @inner
-	 */
-	var url;
-	var doLoad = function() {
-		if(urls.length) {
-			var urlString = urls.shift();
-			try {
-				url = Services.io.newURI(urlString, "UTF-8", null).
-					QueryInterface(Components.interfaces.nsIURL);
-			} catch(e) {
-				if(exception) {
-					exception("Invalid URL "+urlString);
-					return;
-				} else {
-					throw(e);
-				}
-			}
-			
-			Zotero.debug("Loading "+url.spec);
-			xmlhttp.open('GET', url.spec, true);
-			// This doesn't return if we use responseType = document. Don't know why.
-			xmlhttp.responseType = "document";
-			
-			// Send cookie even if "Allow third-party cookies" is disabled (>=Fx3.6 only)
-			var channel = xmlhttp.channel;
-			channel.QueryInterface(Components.interfaces.nsIHttpChannelInternal);
-			channel.forceAllowThirdPartyCookie = true;
-			channel.loadFlags |= Components.interfaces.nsIRequest.LOAD_BYPASS_CACHE;
-			
-			if(cookieSandbox) cookieSandbox.attachToInterfaceRequestor(xmlhttp);
-			xmlhttp.send();
-		} else {
-			if(done) done();
+Zotero.HTTP.requestOriginal = Zotero.HTTP.request;
+Zotero.HTTP.request = function (method, url, options = {}) {
+	options = Object.assign(
+		{},
+		options,
+		{
+			dontCache: true,
+			timeout: 15000
 		}
-	};
-	
-	/**
-	 * Callback to be executed when a page load completes
-	 * @inner
-	 */
-	var onLoad = function() {
-		var doc = xmlhttp.response;
-		if(doc || !exception) {
-			try {
-				doc = Zotero.HTTP.wrapDocument(doc, url);
-				let maybePromise = processor(doc);
-				
-				// If processor returns a promise, wait for it
-				if (maybePromise && maybePromise.then) {
-					maybePromise.then(() => doLoad())
-					.catch(e => {
-						if (exception) {
-							exception(e);
-						}
-						else {
-							throw e;
-						}
-					});
-					return;
-				}
-			}
-			catch(e) {
-				if (exception) {
-					exception(e);
-					return;
-				}
-				else {
-					throw(e);
-				}
-			}
-		} else if(exception) {
-			exception("XMLHttpRequest failed unexpectedly");
-		}
-		
-		doLoad();
-	};
-	
-	if(cookieSandbox) cookieSandbox.attachToInterfaceRequestor(xmlhttp);
-	if(exception) {
-		xmlhttp.onerror = xmlhttp.onabort = xmlhttp.ontimeout = function() {
-			exception("XMLHttpRequest experienced an error");
-			doLoad();
-		};
-		xmlhttp.onload = onLoad;
-	} else {
-		xmlhttp.onloadend = onLoad;
-	}
-	
-	doLoad();
-}
+	);
+	return Zotero.HTTP.requestOriginal(method, url, options);
+};
 
 Zotero.Proxies = {
 	getPotentialProxies: function (uri) {
