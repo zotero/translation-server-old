@@ -90,7 +90,6 @@ for (var i=0; i<xpcomFiles.length; i++) {
 
 // Load CiteProc into Zotero.CiteProc namespace
 Zotero.CiteProc = {Zotero:Zotero};
-subscriptLoader.loadSubScript("chrome://translation-server/content/citeproc-prereqs.js", Zotero.CiteProc);
 subscriptLoader.loadSubScript("chrome://translation-server/content/citeproc.js", Zotero.CiteProc);
 
 // Load RDF files into Zotero.RDF.AJAW namespace (easier than modifying all of the references)

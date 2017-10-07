@@ -77,7 +77,6 @@ mkdir "$BUILD_DIR/app"
 cp -R "$SCRIPT_DIR/src/"* "$BUILD_DIR/app"
 # Copy client XPCOM files
 cp -R "$XPCOM_DIR/rdf" \
-	"$XPCOM_DIR/citeproc-prereqs.js" \
 	"$XPCOM_DIR/citeproc.js" \
 	"$XPCOM_DIR/cookieSandbox.js" \
 	"$XPCOM_DIR/date.js" \
