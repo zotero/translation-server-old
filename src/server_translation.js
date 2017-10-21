@@ -452,6 +452,62 @@ Zotero.Server.Translation.Export.prototype = {
 	}
 };
 
+
+Zotero.Server.Translation.Search = function() {};
+Zotero.Server.Endpoints["/search"] = Zotero.Server.Translation.Search;
+Zotero.Server.Translation.Search.prototype = {
+	supportedMethods: ["POST"],
+	supportedDataTypes: ["text/plain"],
+	
+	init: async function (url, data, sendResponseCallback) {
+		if (!data) {
+			sendResponseCallback(400, "text/plain", "No input provided\n");
+			return;
+		}
+		
+		var identifiers = Zotero.Utilities.Internal.extractIdentifiers(data);
+		if (!identifiers.length) {
+			sendResponseCallback(400, "text/plain", "No identifiers found in input\n");
+			return;
+		}
+		
+		try {
+			var translate = new Zotero.Translate.Search();
+			translate.setIdentifier(identifiers[0]);
+			let translators = await translate.getTranslators();
+			if (!translators.length) {
+				sendResponseCallback(501, "text/plain", "No translators available\n");
+				return;
+			}
+			translate.setTranslator(translators);
+			
+			var items = await translate.translate({
+				libraryID: false
+			});
+		}
+		catch (e) {
+			Zotero.debug(e, 1);
+			sendResponseCallback(
+				500,
+				"text/plain",
+				"An error occurred during translation. "
+					+ "Please check translation with Zotero client.\n"
+			);
+			return;
+		}
+		
+		// Translation can return multiple items (e.g., a parent item and notes pointing to it),
+		// so we have to return an array with keyed items
+		var newItems = [];
+		items.forEach(item => {
+			newItems.push(...Zotero.Utilities.itemToAPIJSON(item));
+		});
+		
+		sendResponseCallback(200, "application/json", JSON.stringify(newItems));
+	}
+};
+
+
 /**
  * Refreshes the translator directory
  *
