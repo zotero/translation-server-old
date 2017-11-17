@@ -13,6 +13,8 @@ The recommended version of translation-server for production use is available [f
 docker run --rm -p 1969:1969 zotero/translation-server
 ``
 
+To bind to a different port, change the first `1969` (e.g., `-p 8080:1969`).
+
 ## Development
 
 ### Docker (recommended)
