@@ -82,3 +82,18 @@ Zotero.Proxies = {
 		};
 	}
 };
+
+Zotero.Utilities.itemToAPIJSONOriginal = Zotero.Utilities.itemToAPIJSON;
+Zotero.Utilities.itemToAPIJSON = function () {
+	var json = Zotero.Utilities.itemToAPIJSONOriginal(...arguments);
+	for (let o of json) {
+		// Remove version
+		delete o.version;
+		
+		// Add 8601 access date (minus milliseconds)
+		if (o.accessDate == 'CURRENT_TIMESTAMP') {
+			o.accessDate = new Date().toISOString().replace(/\.[0-9]{3}Z$/, "Z");
+		}
+	}
+	return json;
+};
