@@ -486,13 +486,22 @@ Zotero.Server.Translation.Search.prototype = {
 			});
 		}
 		catch (e) {
-			Zotero.debug(e, 1);
-			sendResponseCallback(
-				500,
-				"text/plain",
-				"An error occurred during translation. "
-					+ "Please check translation with Zotero client.\n"
-			);
+			if (e == translate.ERROR_NO_RESULTS) {
+				sendResponseCallback(
+					501,
+					"text/plain",
+					e + "\n"
+				);
+			}
+			else {
+				Zotero.debug(e, 1);
+				sendResponseCallback(
+					500,
+					"text/plain",
+					"An error occurred during translation. "
+						+ "Please check translation with the Zotero client.\n"
+				);
+			}
 			return;
 		}
 		
