@@ -7,10 +7,10 @@ RUN apt-get update \
 	# Install node and npm
 	&& mkdir /tmp/node-build \
 	&& cd /tmp/node-build \
-	&& wget --quiet -O node.xz https://nodejs.org/dist/v8.1.2/node-v8.1.2-linux-x64.tar.xz \
+	&& wget --quiet -O node.xz https://nodejs.org/dist/v8.9.4/node-v8.9.4-linux-x64.tar.xz \
 	&& tar xf node.xz \
-	&& mv node-v8.1.2-linux-x64/bin/node /usr/bin/ \
-	&& node-v8.1.2-linux-x64/bin/npm install -g npm \
+	&& mv node-v8.9.4-linux-x64/bin/node /usr/bin/ \
+	&& node-v8.9.4-linux-x64/bin/npm install -g npm \
 	&& cd \
 	&& rm -rf /tmp/node-build
 
