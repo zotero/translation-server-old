@@ -26,7 +26,7 @@ RUN cd /opt/translation-server/modules/zotero \
 	&& rm -rf zotero \
 	&& mkdir zotero \
 	&& mv /tmp/zotero-build zotero/build \
-	
+	\
 	# Build translation-server and make build files the main dir
 	&& cd /opt/translation-server \
 	&& bash fetch_sdk \
@@ -37,7 +37,7 @@ RUN cd /opt/translation-server/modules/zotero \
 	&& rm -rf translation-server \
 	&& mv translation-server2 translation-server \
 	&& cd translation-server \
-	
+	\
 	# Create translators repository
 	&& git clone https://github.com/zotero/translators app/translators
 
