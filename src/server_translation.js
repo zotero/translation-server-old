@@ -267,7 +267,7 @@ Zotero.Server.Translation.Web.prototype = {
 				accessDate: Zotero.Date.dateToISO(new Date())
 			};
 			
-			let items = [Zotero.Utilities.itemToAPIJSON(data)];
+			let items = Zotero.Utilities.itemToAPIJSON(data);
 			
 			this.sendResponse(200, "application/json", JSON.stringify(items));
 			return;
