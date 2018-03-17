@@ -245,9 +245,31 @@ Zotero.Server.Translation.Web.prototype = {
 	 */
 	"translators":function(translate, translators) {
 		if(!translators.length) {
-			// XXX better status code?
 			this.collect(true);
-			this.sendResponse(501, "text/plain", "No translators available\n");
+			
+			let head = translate.document.documentElement.querySelector('head');
+			if (!head) {
+				// XXX better status code?
+				this.sendResponse(501, "text/plain", "No translators available\n");
+				return;
+			}
+			
+			// TEMP: Return basic webpage item for HTML
+			let description = head.querySelector('meta[name=description]');
+			if (description) {
+				description = description.getAttribute('content');
+			}
+			let data = {
+				itemType: "webpage",
+				url: translate.document.location.href,
+				title: translate.document.title,
+				abstractNote: description,
+				accessDate: Zotero.Date.dateToISO(new Date())
+			};
+			
+			let items = [Zotero.Utilities.itemToAPIJSON(data)];
+			
+			this.sendResponse(200, "application/json", JSON.stringify(items));
 			return;
 		}
 		
