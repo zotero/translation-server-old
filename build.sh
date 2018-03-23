@@ -16,13 +16,17 @@ DONE
 
 EXTENSION_DIR="$SCRIPT_DIR/modules/zotero/build"
 CONNECTOR_DIR="$SCRIPT_DIR/modules/zotero-connectors"
-while getopts "d:c:" opt; do
+SKIP_SDK=0
+while getopts "d:c:k" opt; do
 	case $opt in
 		d)
 			EXTENSION_DIR="$OPTARG"
 			;;
 		c)
 			CONNECTOR_DIR="$OPTARG"
+			;;
+		k)
+			SKIP_SDK=1
 			;;
 		*)
 			usage
@@ -43,34 +47,37 @@ mkdir "$BUILD_DIR"
 BIN_SDK_DIR="$FIREFOX_SDK_DIR/sdk/bin"
 BIN_DIR="$FIREFOX_SDK_DIR/bin"
 
-if [ `uname -s` = "Darwin" ]; then
-	cp -R "$FIREFOX_SDK_DIR/bin/Firefox.app/Contents/Resources/omni.ja" \
-		"$FIREFOX_SDK_DIR"/bin/Firefox.app/Contents/MacOS/XUL \
-		"$FIREFOX_SDK_DIR"/bin/Firefox.app/Contents/MacOS/lib* \
-		"$FIREFOX_SDK_DIR"/bin/Firefox.app/Contents/Resources/icudt58l.dat \
-		"$BUILD_DIR"
-else
-	cp "$BIN_DIR/omni.ja" \
-		"$BIN_DIR/icudt58l.dat" \
-		"$BIN_DIR/"lib* \
-		"$BUILD_DIR"
+# Copy SDK files
+if [ $SKIP_SDK -eq 0 ]; then
+	if [ `uname -s` = "Darwin" ]; then
+		cp -R "$FIREFOX_SDK_DIR/bin/Firefox.app/Contents/Resources/omni.ja" \
+			"$FIREFOX_SDK_DIR"/bin/Firefox.app/Contents/MacOS/XUL \
+			"$FIREFOX_SDK_DIR"/bin/Firefox.app/Contents/MacOS/lib* \
+			"$FIREFOX_SDK_DIR"/bin/Firefox.app/Contents/Resources/icudt58l.dat \
+			"$BUILD_DIR"
+	else
+		cp "$BIN_DIR/omni.ja" \
+			"$BIN_DIR/icudt58l.dat" \
+			"$BIN_DIR/"lib* \
+			"$BUILD_DIR"
+	fi
+	
+	if [ -e "$BIN_DIR/XUL" ]; then
+		cp "$BIN_DIR/XUL" "$BUILD_DIR"
+	fi
+	if [ -e "$BIN_SDK_DIR/xpcshell.exe" ]; then
+		cp "$BIN_SDK_DIR/xpcshell.exe" \
+			"$BIN_DIR/"*.dll \
+			"$BUILD_DIR"
+		chmod a+x "$BUILD_DIR/xpcshell.exe"
+	else
+		cp "$BIN_SDK_DIR/xpcshell" "$BUILD_DIR"
+		chmod a+x "$BUILD_DIR/xpcshell"
+	fi
 fi
 
 cp -Rp "$ASSETS_DIR"/* "$BUILD_DIR"
 mkdir -p "$BUILD_DIR/defaults/pref"
-
-if [ -e "$BIN_DIR/XUL" ]; then
-	cp "$BIN_DIR/XUL" "$BUILD_DIR"
-fi
-if [ -e "$BIN_SDK_DIR/xpcshell.exe" ]; then
-	cp "$BIN_SDK_DIR/xpcshell.exe" \
-		"$BIN_DIR/"*.dll \
-		"$BUILD_DIR"
-	chmod a+x "$BUILD_DIR/xpcshell.exe"
-else
-	cp "$BIN_SDK_DIR/xpcshell" "$BUILD_DIR"
-	chmod a+x "$BUILD_DIR/xpcshell"
-fi
 
 mkdir "$BUILD_DIR/app"
 # Copy server files
