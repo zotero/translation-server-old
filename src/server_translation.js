@@ -162,7 +162,7 @@ Zotero.Server.Translation.Web.prototype = {
 	"supportedMethods":["POST"],
 	"supportedDataTypes":["application/json"],
 	
-	"init":function(reqURL, data, sendResponseCallback) {
+	init: async function(reqURL, data, sendResponseCallback) {
 		if(!data.url) {
 			sendResponseCallback(400, "text/plain", "No URL specified\n");
 			return;
@@ -180,6 +180,12 @@ Zotero.Server.Translation.Web.prototype = {
 		if(!url || (!url.schemeIs("http") && !url.schemeIs("https"))) {
 			sendResponseCallback(400, "text/plain", "Invalid URL specified\n");
 			return;
+		}
+		
+		// If a doi.org URL, use search handler
+		if (data.url.match(/^https?:\/\/[^\/]*doi\.org\//)) {
+			let doi = Zotero.Utilities.cleanDOI(data.url);
+			return Zotero.Server.Translation.Search.prototype.init(url, doi, sendResponseCallback);
 		}
 		
 		var runningInstance
