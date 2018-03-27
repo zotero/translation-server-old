@@ -163,6 +163,11 @@ Zotero.Server.Translation.Web.prototype = {
 	"supportedDataTypes":["application/json"],
 	
 	init: async function(reqURL, data, sendResponseCallback) {
+		if (!data) {
+			sendResponseCallback(400, "text/plain", "POST data not provided\n");
+			return;
+		}
+		
 		if(!data.url) {
 			sendResponseCallback(400, "text/plain", "No URL specified\n");
 			return;
