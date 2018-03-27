@@ -207,23 +207,24 @@ Zotero.Server.Translation.Web.prototype = {
 			var translate = this._translate = new Zotero.Translate.Web();
 			translate.setHandler("translators", this.translators.bind(this));
 			translate.setHandler("select", this.select.bind(this));
-			translate.setHandler("done", this.done.bind(this));
 			translate.setCookieSandbox(this._cookieSandbox);
 			
-			Zotero.HTTP.processDocuments(
-				[url.spec],
-				(doc) => {
-					translate.setDocument(doc);
-					return translate.getTranslators();
-				},
-				undefined,
-				(e) => {
-					sendResponseCallback(500, "text/plain", "An error occurred retrieving the document\n");
-					Zotero.debug(e);
-				},
-				undefined,
-				this._cookieSandbox
-			);
+			try {
+				await Zotero.HTTP.processDocuments(
+					[url.spec],
+					(doc) => {
+						translate.setDocument(doc);
+						// This could be optimized by only running detect on secondary translators
+						// if the first fails, but for now just run detect on all
+						return translate.getTranslators(true);
+					},
+					this._cookieSandbox
+				);
+			}
+			catch (e) {
+				Zotero.debug(e, 1);
+				sendResponseCallback(500, "text/plain", "An error occurred retrieving the document\n");
+			}
 		}
 		
 		// GC every 10 requests
@@ -249,8 +250,9 @@ Zotero.Server.Translation.Web.prototype = {
 	/**
 	 * Called when translators are available
 	 */
-	"translators":function(translate, translators) {
-		if(!translators.length) {
+	translators: async function (translate, translators) {
+		// No matching translators
+		if (!translators.length) {
 			this.collect(true);
 			
 			let head = translate.document.documentElement.querySelector('head');
@@ -279,10 +281,39 @@ Zotero.Server.Translation.Web.prototype = {
 			return;
 		}
 		
-		translate.setTranslator(translators[0]);
-		translate.translate({
-			libraryID: false
-		});
+		var translator;
+		var items;
+		while (translator = translators.shift()) {
+			translate.setTranslator(translator);
+			try {
+				items = await translate.translate({
+					libraryID: false
+				});
+				break;
+			}
+			catch (e) {
+				Zotero.debug("Translation using " + translator.label + " failed", 1);
+				Zotero.debug(e, 1);
+				
+				// If no more translator, fails
+				if (!translators.length) {
+					this.sendResponse(500, "text/plain", "An error occurred during translation. Please check translation with Zotero client.\n");
+					return;
+				}
+				
+				// Try next translator
+			}
+		}
+		
+		this._cookieSandbox.clearTimeout();
+		this.collect(true);
+		
+		//this.sendResponse(400, "text/plain", "Invalid input provided.\n");
+		var json = [];
+		for (let item of items) {
+			json.push(...Zotero.Utilities.itemToAPIJSON(item));
+		}
+		this.sendResponse(200, "application/json", JSON.stringify(json));
 	},
 	
 	/**
@@ -337,28 +368,6 @@ Zotero.Server.Translation.Web.prototype = {
 		
 		// Run select callback
 		this._selectCallback(selectItems);
-	},
-	
-	/**
-	 * Called on translation completion
-	 */
-	"done":function(translate, status) {
-		this._cookieSandbox.clearTimeout();
-		this.collect(true);
-		
-		if(!status) {
-			this.sendResponse(500, "text/plain", "An error occurred during translation. Please check translation with Zotero client.\n");
-		} else if(!translate.newItems) {
-			this.sendResponse(400, "text/plain", "Invalid input provided.\n");
-		} else {
-			let n = translate.newItems.length;
-			let items = [];
-			for (let i = 0; i < n; i++) {
-				items.push(...Zotero.Utilities.itemToAPIJSON(translate.newItems[i]));
-			}
-			
-			this.sendResponse(200, "application/json", JSON.stringify(items));
-		}
 	},
 	
 	/**
