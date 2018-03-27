@@ -258,31 +258,7 @@ Zotero.Server.Translation.Web.prototype = {
 	translators: async function (translate, translators) {
 		// No matching translators
 		if (!translators.length) {
-			this.collect(true);
-			
-			let head = translate.document.documentElement.querySelector('head');
-			if (!head) {
-				// XXX better status code?
-				this.sendResponse(501, "text/plain", "No translators available\n");
-				return;
-			}
-			
-			// TEMP: Return basic webpage item for HTML
-			let description = head.querySelector('meta[name=description]');
-			if (description) {
-				description = description.getAttribute('content');
-			}
-			let data = {
-				itemType: "webpage",
-				url: translate.document.location.href,
-				title: translate.document.title,
-				abstractNote: description,
-				accessDate: Zotero.Date.dateToISO(new Date())
-			};
-			
-			let items = Zotero.Utilities.itemToAPIJSON(data);
-			
-			this.sendResponse(200, "application/json", JSON.stringify(items));
+			this.saveWebpage(translate);
 			return;
 		}
 		
@@ -300,9 +276,9 @@ Zotero.Server.Translation.Web.prototype = {
 				Zotero.debug("Translation using " + translator.label + " failed", 1);
 				Zotero.debug(e, 1);
 				
-				// If no more translator, fails
+				// If no more translators, save as webpage
 				if (!translators.length) {
-					this.sendResponse(500, "text/plain", "An error occurred during translation. Please check translation with Zotero client.\n");
+					this.saveWebpage(translate);
 					return;
 				}
 				
@@ -319,6 +295,35 @@ Zotero.Server.Translation.Web.prototype = {
 			json.push(...Zotero.Utilities.itemToAPIJSON(item));
 		}
 		this.sendResponse(200, "application/json", JSON.stringify(json));
+	},
+	
+	// TEMP: Remove once there's a generic webpage translator
+	saveWebpage: function (translate) {
+		this.collect(true);
+		
+		let head = translate.document.documentElement.querySelector('head');
+		if (!head) {
+			// XXX better status code?
+			this.sendResponse(501, "text/plain", "No translators available\n");
+			return;
+		}
+		
+		// TEMP: Return basic webpage item for HTML
+		let description = head.querySelector('meta[name=description]');
+		if (description) {
+			description = description.getAttribute('content');
+		}
+		let data = {
+			itemType: "webpage",
+			url: translate.document.location.href,
+			title: translate.document.title,
+			abstractNote: description,
+			accessDate: Zotero.Date.dateToISO(new Date())
+		};
+		
+		let items = Zotero.Utilities.itemToAPIJSON(data);
+		
+		this.sendResponse(200, "application/json", JSON.stringify(items));
 	},
 	
 	/**
