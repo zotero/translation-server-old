@@ -87,7 +87,7 @@ When you’re done, ensure your changes are applied to `modules/zotero` and `mod
 
 ## Endpoints
 
-Supported endpoints are: `/web`, `/import`, `/export`, and `/refresh`.
+Supported endpoints are: `/web`, `/import`, `/export`, `/search`, and `/refresh`.
 
 Read [server_translation.js](./src/server_translation.js) for more information.
 
