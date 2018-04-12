@@ -512,9 +512,58 @@ Zotero.Server.Translation.Search.prototype = {
 			return;
 		}
 		
-		var identifiers = Zotero.Utilities.Internal.extractIdentifiers(data);
+		let identifiers = Zotero.Utilities.Internal.extractIdentifiers(data);
+		
+		if (identifiers.length && identifiers[0].PMID && identifiers[0].PMID !== data.trim()) {
+			identifiers = [];
+		}
+		
 		if (!identifiers.length) {
-			sendResponseCallback(400, "text/plain", "No identifiers found in input\n");
+			items = await textSearch.search(data);
+			
+			if (items.length >= 2) {
+				let newItems = {};
+				
+				for (let item of items) {
+					
+					let DOI = item.DOI;
+					let ISBN = item.ISBN;
+					
+					if (!DOI && item.extra) {
+						let m = item.extra.match(/DOI: (.*)/);
+						if (m) DOI = m[1];
+					}
+					
+					if (!ISBN && item.extra) {
+						let m = item.extra.match(/ISBN: (.*)/);
+						if (m) ISBN = m[1];
+					}
+					
+					let identifier;
+					if (DOI) {
+						identifier = DOI;
+					}
+					else if (item.ISBN) {
+						identifier = ISBN.split(' ')[0];
+					}
+					
+					newItems[identifier] = {
+						itemType: item.itemType,
+						title: item.title,
+						description: textSearch.formatDescription(item)
+					};
+				}
+				
+				sendResponseCallback(300, "application/json", JSON.stringify(newItems));
+				return;
+			}
+			else if (items.length === 1) {
+				sendResponseCallback(200, "application/json",
+					JSON.stringify(Zotero.Utilities.itemToAPIJSON(items[0])));
+				return;
+			}
+			
+			sendResponseCallback(404, "text/plain", "No results found\n");
 			return;
 		}
 		
@@ -563,6 +612,195 @@ Zotero.Server.Translation.Search.prototype = {
 	}
 };
 
+let textSearch = new function () {
+	this.search = async function (query) {
+		query = query.replace(/[:]/g, ' ');
+		let items = await Promise.all([queryCrossref(query), queryLibraries(query)]);
+		items = items[0].concat(items[1]);
+		items = await filterResults(items, query);
+		return items;
+	};
+	
+	this.formatDescription = function (item) {
+		let text = item.title;
+		
+		if (item.date) {
+			let m = item.date.toString().match(/[0-9]{4}/);
+			if (m) {
+				text += ' (' + m[0] + ')';
+			}
+		}
+		
+		let authors = [];
+		for (let author of item.creators) {
+			let name = null;
+			if (author.firstName) name = author.firstName;
+			if (author.lastName) {
+				if (name.length) name += ' ';
+				name += author.lastName;
+			}
+			authors.push(name);
+		}
+		
+		text += ' ' + authors.join(', ');
+		text += ' (' + item.itemType + ')';
+		return text;
+	};
+	
+	async function queryCrossref(str) {
+		let items = [];
+		try {
+			let translate = new Zotero.Translate.Search();
+			translate.setTranslator("0a61e167-de9a-4f93-a68a-628b48855909");
+			let item = {query: str};
+			translate.setSearch(item);
+			
+			items = await
+				translate.translate({
+					libraryID: false
+				});
+		}
+		catch (e) {
+		
+		}
+		
+		return items;
+	}
+	
+	async function queryLibraries(str) {
+		let items = [];
+		try {
+			let translate = new Zotero.Translate.Search();
+			translate.setTranslator("c070e5a2-4bfd-44bb-9b3c-4be20c50d0d9");
+			let item = {query: str};
+			translate.setSearch(item);
+			items = await
+				translate.translate({
+					libraryID: false
+				});
+		}
+		catch (e) {
+			try {
+				let translate = new Zotero.Translate.Search();
+				translate.setTranslator("de0eef58-cb39-4410-ada0-6b39f43383f9");
+				let item = {query: str};
+				translate.setSearch(item);
+				items = await
+					translate.translate({
+						libraryID: false
+					});
+			}
+			catch (e) {
+			
+			}
+		}
+		return items;
+	}
+	
+	function normalize(text) {
+		let rx = XRegExp('[^\\pL 0-9]', 'g');
+		text = XRegExp.replace(text, rx, '');
+		text = text.normalize('NFKD');
+		text = XRegExp.replace(text, rx, '');
+		text = text.toLowerCase();
+		return text;
+	}
+	
+	function hasAuthor(authors, word) {
+		for (let author of authors) {
+			let names = '';
+			if (author.firstName) names += author.firstName;
+			if (author.lastName) names += ' ' + author.lastName;
+			names = normalize(names);
+			names = names.split(' ').filter(x => x);
+			if (names.indexOf(word) >= 0) return true;
+		}
+		return false;
+	}
+	
+	async function filterResults(items, query) {
+		let nq = normalize(query);
+		let nqp = nq.split(' ').filter(x => x);
+		
+		let results = [];
+		
+		for (let item of items) {
+			let DOI = item.DOI;
+			let ISBN = item.ISBN;
+			
+			if (!DOI && item.extra) {
+				let m = item.extra.match(/DOI: (.*)/);
+				if (m) DOI = m[1];
+			}
+			
+			if (!ISBN && item.extra) {
+				let m = item.extra.match(/ISBN: (.*)/);
+				if (m) ISBN = m[1];
+			}
+			
+			if (!DOI && !ISBN) continue;
+			let title = item.title;
+			title = title.replace(/[:]/g, ' ');
+			
+			let nt = normalize(title);
+			
+			let ntp = nt.split(' ').filter(x => x);
+			let maxFrom = 0;
+			let maxLen = 0;
+			
+			for (let i = 0; i < nqp.length; i++) {
+				for (let j = nqp.length; j > 0; j--) {
+					let a = nqp.slice(i, j);
+					let b = ntp.slice(0, a.length);
+					if (a.length && b.length && a.join(' ') === b.join(' ')) {
+						if (a.length > maxLen) {
+							maxFrom = i;
+							maxLen = j;
+						}
+					}
+				}
+			}
+			
+			if (maxLen) {
+				let foundPart = nqp.slice(maxFrom, maxLen);
+				let rems = nqp.slice(0, maxFrom);
+				rems = rems.concat(nqp.slice(maxLen));
+				
+				if (rems.length) {
+					let foundAuthor = false;
+					let hasNumber = false;
+					let yearFound = false;
+					
+					let rems2 = [];
+					
+					for (let rem of rems) {
+						if (rem.length >= 2 && hasAuthor(item.creators, rem)) {
+							foundAuthor = true;
+						}
+						else if (parseInt(rem) == rem && rem.length == 4) {
+							hasNumber = true;
+							if (item.date === rem) {
+								yearFound = true;
+							}
+							else {
+								rems2.push(rem);
+							}
+						}
+						else {
+							rems2.push(rem);
+						}
+					}
+					
+					if (hasNumber && !yearFound) continue;
+					if (rems2.length && !foundAuthor) continue;
+				}
+				
+				results.push(item);
+			}
+		}
+		return results;
+	}
+};
 
 /**
  * Refreshes the translator directory
