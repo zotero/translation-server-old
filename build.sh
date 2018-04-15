@@ -10,6 +10,7 @@ Usage: $0 [-d DIR] [-c DIR]
 Options
  -d DIR              Zotero client build directory to build from instead of using submodule
  -c DIR              Connector directory to build from instead of using submodule
+ -k                  Skip copying of SDK files
 DONE
 	exit 1
 }

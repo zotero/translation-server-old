@@ -36,13 +36,13 @@ Then, after each change, stop the server and re-run the following command:
 <i>Using the embedded submodules:</i>
 
 ``
-./build.sh && docker run -p 1969:1969 -ti --rm -v `pwd`/build/app/:/opt/translation-server/app/ translation-server
+./build.sh -k && docker run -p 1969:1969 -ti --rm -v `pwd`/build/app/:/opt/translation-server/app/ translation-server
 ``
 
 <i>Using external repositories:</i>
 
 ``
-./build.sh -d ~/zotero-client/build -c ~/zotero-connectors && docker run -p 1969:1969 -ti --rm -v `pwd`/build/app/:/opt/translation-server/app/ translation-server
+./build.sh -d ~/zotero-client/build -c ~/zotero-connectors -k && docker run -p 1969:1969 -ti --rm -v `pwd`/build/app/:/opt/translation-server/app/ translation-server
 ``
 
 This will copy files from `src` and the client and connector repositories into `build` and mount that directory in the container in place of the directory created during the `docker build` step above.
