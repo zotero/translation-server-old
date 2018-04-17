@@ -541,6 +541,7 @@ Zotero.Server.Translation.Search.prototype = {
 					}
 					
 					let identifier;
+					// DOI has a priority over ISBN for items that have both
 					if (DOI) {
 						identifier = DOI;
 					}
@@ -615,8 +616,12 @@ Zotero.Server.Translation.Search.prototype = {
 	textSearch: new function () {
 		this.search = async function (query) {
 			query = query.replace(/:/g, ' ');
+			
+			// Query Crossref and LoC/GBV in parallel to respond faster to the client
 			let items = await Promise.all([queryCrossref(query), queryLibraries(query)]);
 			items = items[0].concat(items[1]);
+			
+			// Filter out too fuzzy items, by comparing item title (and other metadata) against query
 			items = await filterResults(items, query);
 			return items;
 		};
@@ -648,12 +653,13 @@ Zotero.Server.Translation.Search.prototype = {
 			return parts.join(' - ');
 		};
 		
-		async function queryCrossref(str) {
+		async function queryCrossref(query) {
 			let items = [];
 			try {
 				let translate = new Zotero.Translate.Search();
+				// Crossref REST
 				translate.setTranslator("0a61e167-de9a-4f93-a68a-628b48855909");
-				translate.setSearch({query: str});
+				translate.setSearch({query});
 				items = await translate.translate({libraryID: false});
 			}
 			catch (e) {
@@ -662,20 +668,25 @@ Zotero.Server.Translation.Search.prototype = {
 			return items;
 		}
 		
-		async function queryLibraries(str) {
+		/**
+		 * Queries LoC and if that fails, queries GBV
+		 */
+		async function queryLibraries(query) {
 			let items = [];
 			try {
 				let translate = new Zotero.Translate.Search();
+				// Library of Congress ISBN
 				translate.setTranslator("c070e5a2-4bfd-44bb-9b3c-4be20c50d0d9");
-				translate.setSearch({query: str});
+				translate.setSearch({query});
 				items = await translate.translate({libraryID: false});
 			}
 			catch (e) {
 				Zotero.debug(e);
 				try {
 					let translate = new Zotero.Translate.Search();
+					// Gemeinsamer Bibliotheksverbund ISBN
 					translate.setTranslator("de0eef58-cb39-4410-ada0-6b39f43383f9");
-					translate.setSearch({query: str});
+					translate.setSearch({query});
 					items = await translate.translate({libraryID: false});
 				}
 				catch (e) {
@@ -699,6 +710,9 @@ Zotero.Server.Translation.Search.prototype = {
 			return text;
 		}
 		
+		/**
+		 * Checks if a given word equals to any of the authors' names
+		 */
 		function hasAuthor(authors, word) {
 			return authors.some(author => {
 				return (author.firstName && normalize(author.firstName).split(' ').includes(word))
@@ -713,10 +727,10 @@ Zotero.Server.Translation.Search.prototype = {
 		 * validate them against item metadata (currently only authors and year)
 		 */
 		async function filterResults(items, query) {
-			let nq = normalize(query);
-			let nqp = nq.split(' ').filter(x => x);
-			
 			let results = [];
+			
+			// Normalize query, split to words, filter out empty array elements
+			let queryWords = normalize(query).split(' ').filter(x => x);
 			
 			for (let item of items) {
 				let DOI = item.DOI;
@@ -734,64 +748,84 @@ Zotero.Server.Translation.Search.prototype = {
 				
 				if (!DOI && !ISBN) continue;
 				let title = item.title;
+				// Remove all tags
+				title = title.replace(/<\/?\w+[^<>]*>/gi, '');
 				title = title.replace(/:/g, ' ');
 				
-				let nt = normalize(title);
+				// Normalize title, split to words, filter out empty array elements
+				let titleWords = normalize(title).split(' ').filter(x => x);
 				
-				let ntp = nt.split(' ').filter(x => x);
-				let maxFrom = 0;
-				let maxLen = 0;
+				let longestFrom = 0;
+				let longestLen = 0;
 				
-				for (let i = 0; i < nqp.length; i++) {
-					for (let j = nqp.length; j > 0; j--) {
-						let a = nqp.slice(i, j);
-						let b = ntp.slice(0, a.length);
+				// Finds the longest common words sequence between query text and item.title.
+				// For the query text, the sequence can be anywhere in text,
+				// but for item.title it must start at the beginning
+				for (let i = 0; i < queryWords.length; i++) {
+					for (let j = queryWords.length; j > 0; j--) {
+						let a = queryWords.slice(i, j);
+						let b = titleWords.slice(0, a.length);
 						if (a.length && b.length && a.join(' ') === b.join(' ')) {
-							if (a.length > maxLen) {
-								maxFrom = i;
-								maxLen = j;
+							if (a.length > longestLen) {
+								longestFrom = i;
+								longestLen = j;
 							}
 						}
 					}
 				}
 				
-				if (!maxLen) continue;
+				if (!longestLen) continue;
 				
-				let foundPart = nqp.slice(maxFrom, maxLen);
-				let rems = nqp.slice(0, maxFrom);
-				rems = rems.concat(nqp.slice(maxLen));
+				// Longest common sequence of words
+				//let foundPart = queryWords.slice(longestFrom, longestLen);
 				
+				// Remaining words
+				let rems = queryWords.slice(0, longestFrom);
+				rems = rems.concat(queryWords.slice(longestLen));
+				
+				// If at least one remaining word is left, it tries to compare it against item metadata.
+				// Otherwise the whole query text is found in the title, and we have a full match
 				if (rems.length) {
 					let foundAuthor = false;
-					let hasNumber = false;
-					let yearFound = false;
+					let needYear = false;
+					let foundYear = false;
 					
+					// Still remaining words
 					let rems2 = [];
 					
 					for (let rem of rems) {
+						// If the remaining word has at least 2 chars and exists in metadata authors
 						if (rem.length >= 2 && hasAuthor(item.creators, rem)) {
 							foundAuthor = true;
+							continue;
 						}
-						else if (parseInt(rem) == rem && rem.length == 4) {
-							hasNumber = true;
-							if (item.date === rem) {
-								yearFound = true;
+						
+						// If the remaining word is a 4 digit number (year)
+						if (/^[0-9]{4}$/.test(rem)) {
+							needYear = true;
+							
+							if (item.date) {
+								// If the remaining word exists in the item date
+								let m = item.date.toString().match(/[0-9]{4}/);
+								if (m && m[0] === rem) {
+									foundYear = true;
+									continue;
+								}
 							}
-							else {
-								rems2.push(rem);
-							}
 						}
-						else {
-							rems2.push(rem);
-						}
+						
+						// Push the word that is still remaining
+						rems2.push(rem);
 					}
 					
-					if (hasNumber && !yearFound) continue;
+					// If a year exists in the query, but is not matched to the item date
+					if (needYear && !foundYear) continue;
+					
+					// If there are still remaining words and none of authors are found
 					if (rems2.length && !foundAuthor) continue;
 				}
 				
 				results.push(item);
-				
 			}
 			return results;
 		}
