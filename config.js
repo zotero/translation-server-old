@@ -35,3 +35,6 @@ pref("dom.popup_allowed_events", "");
 
 // Disable places
 pref("places.history.enabled", false);
+
+// Pass an email to Crossref query to utilize the faster servers pool
+pref("translation-server.translators.CrossrefREST.email", "");
