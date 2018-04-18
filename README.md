@@ -59,7 +59,11 @@ When you’re done, ensure your changes are applied to `modules/zotero` and `mod
 
 1. `git clone --recursive https://github.com/zotero/translation-server`
 
-1. `cd translation-server/modules/zotero`
+1. `cd translation-server/modules/zotero/translators`
+
+1. `git pull origin master`
+
+1. `cd ..`
 
 1. `npm install && npm run build`
 
