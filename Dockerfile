@@ -14,29 +14,33 @@ RUN apt-get update \
 	&& cd \
 	&& rm -rf /tmp/node-build
 
+RUN groupadd -r translation && useradd --no-log-init -r -d /opt/translation-server -g translation translation
+
+ADD --chown=translation:translation . /tmp/translation-server-build
+RUN mkdir /opt/translation-server && chown translation:translation /opt/translation-server
 WORKDIR /opt/translation-server
-COPY . .
+
+USER translation
 
 # Build Zotero client from submodule and delete non-build files
-RUN cd /opt/translation-server/modules/zotero \
+RUN cd /tmp/translation-server-build/modules/zotero \
 	&& npm i \
 	&& npm run build \
-	&& rsync -aL --exclude test --exclude translators build/ /tmp/zotero-build/ \
+	&& rsync -aL --exclude test --exclude translators build/ ../zotero-clean \
 	&& cd .. \
 	&& rm -rf zotero \
 	&& mkdir zotero \
-	&& mv /tmp/zotero-build zotero/build \
+	&& mv zotero-clean zotero/build \
 	\
-	# Build translation-server and make build files the main dir
-	&& cd /opt/translation-server \
+	# Build translation-server
+	&& cd .. \
 	&& bash fetch_sdk \
 	&& bash build.sh \
 	&& rm -rf firefox-sdk \
-	&& cd .. \
-	&& mv translation-server/build translation-server2 \
-	&& rm -rf translation-server \
-	&& mv translation-server2 translation-server \
-	&& cd translation-server \
+	# Move build files to home directory
+	&& mv build/* ~ \
+	&& cd ~ \
+	&& rm -rf /tmp/translation-server-build \
 	\
 	# Create translators repository
 	&& git clone https://github.com/zotero/translators app/translators
