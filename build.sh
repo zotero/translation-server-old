@@ -133,8 +133,10 @@ echo "content translation-server app/" >> "$BUILD_DIR/chrome.manifest"
 echo "resource zotero app/resource/" >> "$BUILD_DIR/chrome.manifest"
 echo "locale branding en-US chrome/branding/locale/" >> "$BUILD_DIR/chrome.manifest"
 
-# Copy translators (overwritten with real Git repo in production Docker build)
-rsync -a --delete "$EXTENSION_DIR/translators/" "$BUILD_DIR/app/translators/"
+# Copy translators (doesn't apply to production Docker builds)
+if [ -d "$EXTENSION_DIR/translators" ]; then
+	rsync -a --delete "$EXTENSION_DIR/translators/" "$BUILD_DIR/app/translators/"
+fi
 
 # Add preferences
 #cp -r "$EXTENSION_DIR/defaults" "$RESDIR"
