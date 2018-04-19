@@ -663,7 +663,7 @@ Zotero.Server.Translation.Search.prototype = {
 				items = await translate.translate({libraryID: false});
 			}
 			catch (e) {
-				Zotero.debug(e);
+				Zotero.debug(e, 2);
 			}
 			return items;
 		}
@@ -681,7 +681,7 @@ Zotero.Server.Translation.Search.prototype = {
 				items = await translate.translate({libraryID: false});
 			}
 			catch (e) {
-				Zotero.debug(e);
+				Zotero.debug(e, 2);
 				try {
 					let translate = new Zotero.Translate.Search();
 					// Gemeinsamer Bibliotheksverbund ISBN
@@ -690,7 +690,7 @@ Zotero.Server.Translation.Search.prototype = {
 					items = await translate.translate({libraryID: false});
 				}
 				catch (e) {
-					Zotero.debug(e);
+					Zotero.debug(e, 2);
 				}
 			}
 			return items;
