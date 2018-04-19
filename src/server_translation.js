@@ -565,7 +565,7 @@ Zotero.Server.Translation.Search.prototype = {
 				return;
 			}
 			
-			sendResponseCallback(404, "text/plain", "No results found\n");
+			sendResponseCallback(200, "application/json", "[]");
 			return;
 		}
 		
