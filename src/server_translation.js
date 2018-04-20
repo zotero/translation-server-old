@@ -520,12 +520,13 @@ Zotero.Server.Translation.Search.prototype = {
 		}
 		
 		if (!identifiers.length) {
-			items = await this.textSearch.search(data);
+			let result = await this.textSearch.search(data);
 			
-			if (items.length >= 2) {
+			// Throw selection if two or more items are found, or the selection flag is marked
+			if (result.items.length >= 2 || result.select) {
 				let newItems = {};
 				
-				for (let item of items) {
+				for (let item of result.items) {
 					
 					let DOI = item.DOI;
 					let ISBN = item.ISBN;
@@ -559,9 +560,9 @@ Zotero.Server.Translation.Search.prototype = {
 				sendResponseCallback(300, "application/json", JSON.stringify(newItems));
 				return;
 			}
-			else if (items.length === 1) {
+			else if (result.items.length === 1) {
 				sendResponseCallback(200, "application/json",
-					JSON.stringify(Zotero.Utilities.itemToAPIJSON(items[0])));
+					JSON.stringify(Zotero.Utilities.itemToAPIJSON(result.items[0])));
 				return;
 			}
 			
@@ -622,8 +623,7 @@ Zotero.Server.Translation.Search.prototype = {
 			items = items[0].concat(items[1]);
 			
 			// Filter out too fuzzy items, by comparing item title (and other metadata) against query
-			items = await filterResults(items, query);
-			return items;
+			return await filterResults(items, query);
 		};
 		
 		this.formatDescription = function (item) {
@@ -727,8 +727,9 @@ Zotero.Server.Translation.Search.prototype = {
 		 * validate them against item metadata (currently only authors and year)
 		 */
 		async function filterResults(items, query) {
-			let results = [];
-			
+			let filteredItems = [];
+			let select = false;
+
 			// Normalize query, split to words, filter out empty array elements
 			let queryWords = normalize(query).split(' ').filter(x => x);
 			
@@ -758,26 +759,27 @@ Zotero.Server.Translation.Search.prototype = {
 				let longestFrom = 0;
 				let longestLen = 0;
 				
-				// Finds the longest common words sequence between query text and item.title.
-				// For the query text, the sequence can be anywhere in text,
-				// but for item.title it must start at the beginning
+				// Finds the longest common words sequence between query text and item.title
 				for (let i = 0; i < queryWords.length; i++) {
 					for (let j = queryWords.length; j > 0; j--) {
 						let a = queryWords.slice(i, j);
-						let b = titleWords.slice(0, a.length);
-						if (a.length && b.length && a.join(' ') === b.join(' ')) {
-							if (a.length > longestLen) {
-								longestFrom = i;
-								longestLen = j;
+						for (let k = 0; k < titleWords.length - a.length + 1; k++) {
+							let b = titleWords.slice(k, a.length + k);
+							if (a.length && b.length && a.join(' ') === b.join(' ')) {
+								if (a.length > longestLen) {
+									longestFrom = i;
+									longestLen = b.length;
+								}
 							}
 						}
 					}
 				}
 				
-				if (!longestLen) continue;
+				// At least two common words sequence must be found between query and title
+				if (longestLen < 2) continue;
 				
 				// Longest common sequence of words
-				//let foundPart = queryWords.slice(longestFrom, longestLen);
+				let foundPart = queryWords.slice(longestFrom, longestLen);
 				
 				// Remaining words
 				let rems = queryWords.slice(0, longestFrom);
@@ -794,6 +796,9 @@ Zotero.Server.Translation.Search.prototype = {
 					let rems2 = [];
 					
 					for (let rem of rems) {
+						// Ignore words
+						if (['the', 'a', 'an'].indexOf(rem) >= 0) continue;
+						
 						// If the remaining word has at least 2 chars and exists in metadata authors
 						if (rem.length >= 2 && hasAuthor(item.creators, rem)) {
 							foundAuthor = true;
@@ -825,9 +830,12 @@ Zotero.Server.Translation.Search.prototype = {
 					if (rems2.length && !foundAuthor) continue;
 				}
 				
-				results.push(item);
+				// If the query part that was found in title is shorter than 30 symbols
+				if (foundPart.join(' ').length < 30) select = true;
+				
+				filteredItems.push(item);
 			}
-			return results;
+			return {select, items: filteredItems};
 		}
 	}
 };
