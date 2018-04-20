@@ -650,7 +650,7 @@ Zotero.Server.Translation.Search.prototype = {
 				parts.push(item.publisher);
 			}
 			
-			return parts.join(' - ');
+			return parts.join(' \u2013 ');
 		};
 		
 		async function queryCrossref(query) {
