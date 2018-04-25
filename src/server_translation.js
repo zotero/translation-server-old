@@ -619,12 +619,57 @@ Zotero.Server.Translation.Search.prototype = {
 			query = query.replace(/:/g, ' ');
 			
 			// Query Crossref and LoC/GBV in parallel to respond faster to the client
-			let items = await Promise.all([queryCrossref(query), queryLibraries(query)]);
-			items = items[0].concat(items[1]);
+			let [crossrefItems, libraryItems] = await Promise.all([queryCrossref(query), queryLibraries(query)]);
+
+			// Subtract book reviews from Crossref
+			crossrefItems = subtractCrossrefItems(crossrefItems, libraryItems);
+			
+			let items = crossrefItems.concat(libraryItems);
 			
 			// Filter out too fuzzy items, by comparing item title (and other metadata) against query
 			return await filterResults(items, query);
 		};
+		
+		function subtractCrossrefItems(crossrefItems, libraryItems) {
+			let items = [];
+			for(let crossrefItem of crossrefItems) {
+				// Keep books and book sections
+				if(['book', 'bookSection'].includes(crossrefItem.itemType)) {
+					items.push(crossrefItem);
+					continue;
+				}
+				
+				let crossrefTitle = crossrefItem.title;
+				// Remove all tags
+				crossrefTitle = crossrefTitle.replace(/<\/?\w+[^<>]*>/gi, '');
+				crossrefTitle = crossrefTitle.replace(/:/g, ' ');
+				
+				// Normalize title, split to words, filter out empty array elements
+				crossrefTitle = normalize(crossrefTitle).split(' ').filter(x => x).join(' ');
+				
+				let found = false;
+				for(let libraryItem of libraryItems) {
+					let libraryTitle = libraryItem.title;
+					// Remove all tags
+					libraryTitle = libraryTitle.replace(/<\/?\w+[^<>]*>/gi, '');
+					libraryTitle = libraryTitle.replace(/:/g, ' ');
+					
+					// Normalize title, split to words, filter out empty array elements
+					libraryTitle = normalize(libraryTitle).split(' ').filter(x => x).join(' ');
+					
+					if(crossrefTitle.includes(libraryTitle)) {
+						found = true;
+						break;
+					}
+				}
+				
+				if(!found) {
+					items.push(crossrefItem);
+				}
+			}
+			
+			return items;
+		}
 		
 		this.formatDescription = function (item) {
 			let parts = [];
@@ -776,7 +821,7 @@ Zotero.Server.Translation.Search.prototype = {
 				}
 				
 				// At least two common words sequence must be found between query and title
-				if (longestLen < 2) continue;
+				if (longestLen < 1) continue;
 				
 				// Longest common sequence of words
 				let foundPart = queryWords.slice(longestFrom, longestLen);
@@ -833,8 +878,23 @@ Zotero.Server.Translation.Search.prototype = {
 				// If the query part that was found in title is shorter than 30 symbols
 				if (foundPart.join(' ').length < 30) select = true;
 				
-				filteredItems.push(item);
+				filteredItems.push({
+					matchedLen: foundPart.join(' ').length,
+					titleLen: titleWords.join(' ').length,
+					item
+				});
 			}
+			
+			// Sort results by matched text length
+			// and how close the matched text length is to title length
+			filteredItems.sort(function (a, b) {
+				if (b.matchedLen < a.matchedLen) return -1;
+				if (b.matchedLen > a.matchedLen) return 1;
+				return Math.abs(a.matchedLen - a.titleLen) - Math.abs(b.matchedLen - b.titleLen);
+			});
+			
+			filteredItems = filteredItems.map(item => item.item);
+			
 			return {select, items: filteredItems};
 		}
 	}
