@@ -21,6 +21,10 @@ perl -pi -e 's/pref\("translation-server.httpServer.allowedOrigins", "[^"]*"\);/
 # We have to escape the '@' so it doesn't get swallowed by Perl.
 perl -pi -e 's/pref\("translation-server.translators.CrossrefREST.email", "[^"]*"\);/pref\("translation-server.translators.CrossrefREST.email", "'$(echo ${TRANSLATION_EMAIL:-} | sed 's/@/\\@/')'"\);/g' defaults/pref/config.js
 
+# Set identifier search endpoint
+# We have to escape the '//' in the URL.
+perl -pi -e 's/pref\("translation-server.identifierSearchURL", "[^"]*"\);/pref\("translation-server.identifierSearchURL", "'$(echo "${IDENTIFIER_SEARCH_URL:-}" | sed 's/\//\\\//g')'"\);/g' defaults/pref/config.js
+
 if [[ "`uname`" == CYGWIN* ]]; then
 	./xpcshell.exe -v 180 -mn app/init.js "$@"
 else

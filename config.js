@@ -40,3 +40,5 @@ pref("places.history.enabled", false);
 pref("translation-server.httpServer.allowedOrigins", "");
 // Pass an email to Crossref query to utilize the faster servers pool
 pref("translation-server.translators.CrossrefREST.email", "");
+// Identifier search endpoint
+pref("translation-server.identifierSearchURL", "");

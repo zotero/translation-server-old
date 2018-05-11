@@ -523,7 +523,7 @@ Zotero.Server.Translation.Search.prototype = {
 			let result = await this.textSearch.search(data);
 			
 			// Throw selection if two or more items are found, or the selection flag is marked
-			if (result.items.length >= 2 || result.select) {
+			if (result.items.length >= 2 || result.items.length >= 1 && result.select) {
 				let newItems = {};
 				
 				for (let item of result.items) {
@@ -616,18 +616,58 @@ Zotero.Server.Translation.Search.prototype = {
 	
 	textSearch: new function () {
 		this.search = async function (query) {
-			query = query.replace(/:/g, ' ');
+			let identifiers;
+			try {
+				let xmlhttp = await Zotero.HTTP.request("GET", Zotero.Prefs.get("identifierSearchURL") + encodeURIComponent(query));
+				identifiers = JSON.parse(xmlhttp.responseText);
+				identifiers = identifiers.slice(0, 3);
+			} catch(e) {
+				Zotero.debug(e, 1);
+				return {select: false, items: []};
+			}
 			
-			// Query Crossref and LoC/GBV in parallel to respond faster to the client
-			let [crossrefItems, libraryItems] = await Promise.all([queryCrossref(query), queryLibraries(query)]);
+			let items = [];
+			for (let identifier of identifiers) {
+				let translate = new Zotero.Translate.Search();
+				try {
+					translate.setIdentifier(identifier);
+					let translators = await translate.getTranslators();
+					if (!translators.length) {
+						continue;
+					}
+					translate.setTranslator(translators);
+					
+					let newItems = await translate.translate({
+						libraryID: false
+					});
 
-			// Subtract book reviews from Crossref
-			crossrefItems = subtractCrossrefItems(crossrefItems, libraryItems);
+					if (newItems.length) {
+						let seq = getLongestCommonSequence(newItems[0].title, query);
+						if (seq.length >= 6 && seq.split(' ').length >= 2) {
+							items.push(newItems[0]);
+						}
+					}
+				}
+				catch (e) {
+					if (e !== translate.ERROR_NO_RESULTS) {
+						Zotero.debug(e, 1);
+					}
+				}
+			}
 			
-			let items = crossrefItems.concat(libraryItems);
+			// Force item selection, even for a single item
+			return {select: true, items};
 			
-			// Filter out too fuzzy items, by comparing item title (and other metadata) against query
-			return await filterResults(items, query);
+			// // Query Crossref and LoC/GBV in parallel to respond faster to the client
+			// let [crossrefItems, libraryItems] = await Promise.all([queryCrossref(query), queryLibraries(query)]);
+			//
+			// // Subtract book reviews from Crossref
+			// crossrefItems = subtractCrossrefItems(crossrefItems, libraryItems);
+			//
+			// let items = crossrefItems.concat(libraryItems);
+			//
+			// // Filter out too fuzzy items, by comparing item title (and other metadata) against query
+			// return await filterResults(items, query);
 		};
 		
 		function subtractCrossrefItems(crossrefItems, libraryItems) {
@@ -896,6 +936,38 @@ Zotero.Server.Translation.Search.prototype = {
 			filteredItems = filteredItems.map(item => item.item);
 			
 			return {select, items: filteredItems};
+		}
+		
+		function getLongestCommonSequence(title, query) {
+			title = title.replace(/<\/?\w+[^<>]*>/gi, '');
+			title = title.replace(/:/g, ' ');
+			
+			query = query.replace(/:/g, ' ');
+			
+			// Normalize, split to words and filter out empty array elements
+			let titleWords = normalize(title).split(' ').filter(x => x);
+			let queryWords = normalize(query).split(' ').filter(x => x);
+			
+			let longestFrom = 0;
+			let longestLen = 0;
+			
+			// Finds the longest common words sequence between query text and item.title
+			for (let i = 0; i < queryWords.length; i++) {
+				for (let j = queryWords.length; j > 0; j--) {
+					let a = queryWords.slice(i, j);
+					for (let k = 0; k < titleWords.length - a.length + 1; k++) {
+						let b = titleWords.slice(k, a.length + k);
+						if (a.length && b.length && a.join(' ') === b.join(' ')) {
+							if (a.length > longestLen) {
+								longestFrom = i;
+								longestLen = b.length;
+							}
+						}
+					}
+				}
+			}
+			
+			return queryWords.slice(longestFrom, longestFrom + longestLen).join(' ');
 		}
 	}
 };
