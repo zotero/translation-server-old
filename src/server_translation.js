@@ -506,7 +506,8 @@ Zotero.Server.Translation.Search.prototype = {
 	supportedMethods: ["POST"],
 	supportedDataTypes: ["text/plain"],
 	
-	init: async function (url, data, sendResponseCallback) {
+	init: async function (requestData) {
+		var data = requestData.data;
 		if (!data) {
 			sendResponseCallback(400, "text/plain", "No input provided\n");
 			return;
@@ -520,14 +521,16 @@ Zotero.Server.Translation.Search.prototype = {
 		}
 		
 		if (!identifiers.length) {
-			let result = await this.textSearch.search(data);
+			let result = await this.textSearch.search(
+				data,
+				requestData.query && requestData.query.start
+			);
 			
 			// Throw selection if two or more items are found, or the selection flag is marked
 			if (result.items.length >= 2 || result.items.length >= 1 && result.select) {
 				let newItems = {};
 				
 				for (let item of result.items) {
-					
 					let DOI = item.DOI;
 					let ISBN = item.ISBN;
 					
@@ -553,21 +556,28 @@ Zotero.Server.Translation.Search.prototype = {
 					newItems[identifier] = {
 						itemType: item.itemType,
 						title: item.title,
-						description: this.textSearch.formatDescription(item)
+						description: this.textSearch.formatDescription(item),
 					};
 				}
 				
-				sendResponseCallback(300, "application/json", JSON.stringify(newItems));
-				return;
+				let headers = {
+					'Content-Type': 'application/json'
+				};
+				// If there were more results, include a link to the next result set
+				if (result.next) {
+					headers.Link = `</search?start=${result.next}>; rel="next"`;
+				}
+				return [300, headers, JSON.stringify(newItems)];
 			}
 			else if (result.items.length === 1) {
-				sendResponseCallback(200, "application/json",
-					JSON.stringify(Zotero.Utilities.itemToAPIJSON(result.items[0])));
-				return;
+				return [
+					200,
+					"application/json",
+					JSON.stringify(Zotero.Utilities.itemToAPIJSON(result.items[0]))
+				];
 			}
 			
-			sendResponseCallback(200, "application/json", "[]");
-			return;
+			return [200, "application/json", "[]"];
 		}
 		
 		try {
@@ -575,8 +585,7 @@ Zotero.Server.Translation.Search.prototype = {
 			translate.setIdentifier(identifiers[0]);
 			let translators = await translate.getTranslators();
 			if (!translators.length) {
-				sendResponseCallback(501, "text/plain", "No translators available\n");
-				return;
+				return [501, "text/plain", "No translators available\n"];
 			}
 			translate.setTranslator(translators);
 			
@@ -586,22 +595,20 @@ Zotero.Server.Translation.Search.prototype = {
 		}
 		catch (e) {
 			if (e == translate.ERROR_NO_RESULTS) {
-				sendResponseCallback(
+				return [
 					501,
 					"text/plain",
 					e + "\n"
-				);
+				];
 			}
-			else {
-				Zotero.debug(e, 1);
-				sendResponseCallback(
-					500,
-					"text/plain",
-					"An error occurred during translation. "
-						+ "Please check translation with the Zotero client.\n"
-				);
-			}
-			return;
+			
+			Zotero.debug(e, 1);
+			return [
+				500,
+				"text/plain",
+				"An error occurred during translation. "
+					+ "Please check translation with the Zotero client.\n"
+			];
 		}
 		
 		// Translation can return multiple items (e.g., a parent item and notes pointing to it),
@@ -611,22 +618,41 @@ Zotero.Server.Translation.Search.prototype = {
 			newItems.push(...Zotero.Utilities.itemToAPIJSON(item));
 		});
 		
-		sendResponseCallback(200, "application/json", JSON.stringify(newItems));
+		return [200, "application/json", JSON.stringify(newItems)];
 	},
 	
 	textSearch: new function () {
-		this.search = async function (query) {
+		this.search = async function (query, start) {
+			const numResults = 3;
 			let identifiers;
+			let moreResults = false;
 			try {
 				let xmlhttp = await Zotero.HTTP.request("GET", Zotero.Prefs.get("identifierSearchURL") + encodeURIComponent(query));
 				identifiers = JSON.parse(xmlhttp.responseText);
-				identifiers = identifiers.slice(0, 3);
+				
+				// If passed a start= parameter, skip ahead
+				let startPos = 0;
+				if (start) {
+					for (let i = 0; i < identifiers.length; i++) {
+						if (identifierToToken(identifiers[i]) == start) {
+							startPos = i + 1;
+							break;
+						}
+					}
+				}
+				
+				if (identifiers.length > startPos + numResults + 1) {
+					moreResults = true;
+				}
+				
+				identifiers = identifiers.slice(startPos, startPos + 3);
 			} catch(e) {
 				Zotero.debug(e, 1);
 				return {select: false, items: []};
 			}
 			
 			let items = [];
+			let nextLastIdentifier = null;
 			for (let identifier of identifiers) {
 				let translate = new Zotero.Translate.Search();
 				try {
@@ -645,6 +671,10 @@ Zotero.Server.Translation.Search.prototype = {
 						let seq = getLongestCommonSequence(newItems[0].title, query);
 						if (seq.length >= 6 && seq.split(' ').length >= 2) {
 							items.push(newItems[0]);
+							// Keep track of last identifier if we're limiting results
+							if (moreResults) {
+								nextLastIdentifier = identifier;
+							}
 						}
 					}
 				}
@@ -655,8 +685,12 @@ Zotero.Server.Translation.Search.prototype = {
 				}
 			}
 			
-			// Force item selection, even for a single item
-			return {select: true, items};
+			return {
+				// Force item selection, even for a single item
+				select: true,
+				items,
+				next: nextLastIdentifier ? identifierToToken(nextLastIdentifier) : null
+			};
 			
 			// // Query Crossref and LoC/GBV in parallel to respond faster to the client
 			// let [crossrefItems, libraryItems] = await Promise.all([queryCrossref(query), queryLibraries(query)]);
@@ -969,7 +1003,11 @@ Zotero.Server.Translation.Search.prototype = {
 			
 			return queryWords.slice(longestFrom, longestFrom + longestLen).join(' ');
 		}
-	}
+		
+		function identifierToToken(identifier) {
+			return Zotero.Utilities.Internal.md5(JSON.stringify(identifier));
+		}
+	},
 };
 
 /**
