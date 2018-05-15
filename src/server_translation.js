@@ -198,10 +198,25 @@ Zotero.Server.Translation.Web.prototype = {
 			return;
 		}
 		
+		let m = data.url.match(/https?:\/\/([^/]+)/);
+		if (m) {
+			let domain = m[1];
+			let blacklisted = Zotero.Prefs.get("blacklistedDomains").split(',').some(x => new RegExp(x).test(domain));
+			if (blacklisted) {
+				let doi = Zotero.Utilities.cleanDOI(data.url);
+				if (doi) {
+					return sendResponseCallback(...(await Zotero.Server.Translation.Search.prototype.init({data: doi})));
+				}
+				else {
+					return sendResponseCallback(500, "text/plain", "An error occurred retrieving the document\n");
+				}
+			}
+		}
+		
 		// If a doi.org URL, use search handler
 		if (data.url.match(/^https?:\/\/[^\/]*doi\.org\//)) {
 			let doi = Zotero.Utilities.cleanDOI(data.url);
-			return Zotero.Server.Translation.Search.prototype.init(url, doi, sendResponseCallback);
+			return sendResponseCallback(...(await Zotero.Server.Translation.Search.prototype.init({data: doi})));
 		}
 		
 		var runningInstance
@@ -238,6 +253,11 @@ Zotero.Server.Translation.Web.prototype = {
 				);
 			}
 			catch (e) {
+				let doi = Zotero.Utilities.cleanDOI(data.url);
+				if(doi) {
+					return sendResponseCallback(...(await Zotero.Server.Translation.Search.prototype.init({data: doi})));
+				}
+				
 				Zotero.debug(e, 1);
 				sendResponseCallback(500, "text/plain", "An error occurred retrieving the document\n");
 			}
