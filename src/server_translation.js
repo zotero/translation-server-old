@@ -201,7 +201,9 @@ Zotero.Server.Translation.Web.prototype = {
 		let m = data.url.match(/https?:\/\/([^/]+)/);
 		if (m) {
 			let domain = m[1];
-			let blacklisted = Zotero.Prefs.get("blacklistedDomains").split(',').some(x => new RegExp(x).test(domain));
+			let blacklisted = Zotero.Prefs.get("blacklistedDomains")
+				.split(',')
+				.some(x => x && new RegExp(x).test(domain));
 			if (blacklisted) {
 				let doi = Zotero.Utilities.cleanDOI(data.url);
 				if (doi) {
