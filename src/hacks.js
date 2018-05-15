@@ -65,12 +65,11 @@ Zotero.CookieSandbox.prototype.clearTimeout = function() {
 Zotero.HTTP.requestOriginal = Zotero.HTTP.request;
 Zotero.HTTP.request = function (method, url, options = {}) {
 	options = Object.assign(
-		{},
-		options,
 		{
 			dontCache: true,
 			timeout: 5000
-		}
+		},
+		options
 	);
 	return Zotero.HTTP.requestOriginal(method, url, options);
 };
