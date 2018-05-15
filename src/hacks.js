@@ -69,7 +69,7 @@ Zotero.HTTP.request = function (method, url, options = {}) {
 		options,
 		{
 			dontCache: true,
-			timeout: 15000
+			timeout: 5000
 		}
 	);
 	return Zotero.HTTP.requestOriginal(method, url, options);

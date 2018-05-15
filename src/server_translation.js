@@ -627,7 +627,13 @@ Zotero.Server.Translation.Search.prototype = {
 			let identifiers;
 			let moreResults = false;
 			try {
-				let xmlhttp = await Zotero.HTTP.request("GET", Zotero.Prefs.get("identifierSearchURL") + encodeURIComponent(query));
+				let xmlhttp = await Zotero.HTTP.request(
+					"GET",
+					Zotero.Prefs.get("identifierSearchURL") + encodeURIComponent(query),
+					{
+						timeout: 15000
+					}
+				);
 				identifiers = JSON.parse(xmlhttp.responseText);
 				
 				// If passed a start= parameter, skip ahead
