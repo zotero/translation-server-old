@@ -257,7 +257,8 @@ Zotero.Server.Translation.Web.prototype = {
 			catch (e) {
 				Zotero.debug(e, 1);
 				
-				let doi = Zotero.Utilities.cleanDOI(data.url);
+				// Parse URL up to '?' for DOI
+				let doi = Zotero.Utilities.cleanDOI(data.url.match(/[^\?]+/)[0]);
 				if (doi) {
 					Zotero.debug("Found DOI in URL -- continuing with " + doi);
 					return sendResponseCallback(...(await Zotero.Server.Translation.Search.prototype.init({data: doi})));
