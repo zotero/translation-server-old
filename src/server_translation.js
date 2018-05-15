@@ -255,8 +255,11 @@ Zotero.Server.Translation.Web.prototype = {
 				);
 			}
 			catch (e) {
+				Zotero.debug(e, 1);
+				
 				let doi = Zotero.Utilities.cleanDOI(data.url);
-				if(doi) {
+				if (doi) {
+					Zotero.debug("Found DOI in URL -- continuing with " + doi);
 					return sendResponseCallback(...(await Zotero.Server.Translation.Search.prototype.init({data: doi})));
 				}
 				
