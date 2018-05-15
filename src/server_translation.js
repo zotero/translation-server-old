@@ -146,6 +146,17 @@ Zotero.Server.Translation = new function() {
 	};
 };
 
+Zotero.Server.Translation.Root = function() {};
+Zotero.Server.Endpoints["/"] = Zotero.Server.Translation.Root;
+Zotero.Server.Translation.Root.prototype = {
+	"supportedMethods":["GET"],
+	
+	init: async function (requestData) {
+		return [200];
+	}
+
+}
+
 /**
  * Translates a web page
  *
