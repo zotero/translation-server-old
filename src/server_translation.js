@@ -520,8 +520,7 @@ Zotero.Server.Translation.Search.prototype = {
 	init: async function (requestData) {
 		var data = requestData.data;
 		if (!data) {
-			sendResponseCallback(400, "text/plain", "No input provided\n");
-			return;
+			return [400, "text/plain", "No input provided\n"];
 		}
 		
 		let identifiers = Zotero.Utilities.Internal.extractIdentifiers(data);
