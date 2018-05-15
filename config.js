@@ -42,3 +42,7 @@ pref("translation-server.httpServer.allowedOrigins", "");
 pref("translation-server.translators.CrossrefREST.email", "");
 // Identifier search endpoint
 pref("translation-server.identifierSearchURL", "");
+
+// Blacklist domains
+pref("translation-server.blacklistedDomains", "");
+
