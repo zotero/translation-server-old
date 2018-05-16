@@ -687,7 +687,7 @@ Zotero.Server.Translation.Search.prototype = {
 					moreResults = true;
 				}
 				
-				identifiers = identifiers.slice(startPos, startPos + 3);
+				identifiers = identifiers.slice(startPos);
 			} catch(e) {
 				Zotero.debug(e, 1);
 				return {select: false, items: []};
@@ -716,6 +716,9 @@ Zotero.Server.Translation.Search.prototype = {
 							// Keep track of last identifier if we're limiting results
 							if (moreResults) {
 								nextLastIdentifier = identifier;
+							}
+							if (items.length == numResults) {
+								break;
 							}
 						}
 					}
