@@ -67,7 +67,7 @@ Zotero.HTTP.request = function (method, url, options = {}) {
 	options = Object.assign(
 		{
 			dontCache: true,
-			timeout: 5000
+			timeout: 7000
 		},
 		options
 	);
