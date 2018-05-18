@@ -25,6 +25,9 @@ perl -pi -e 's/pref\("translation-server.translators.CrossrefREST.email", "[^"]*
 # We have to escape the '//' in the URL.
 perl -pi -e 's/pref\("translation-server.identifierSearchURL", "[^"]*"\);/pref\("translation-server.identifierSearchURL", "'$(echo "${IDENTIFIER_SEARCH_URL:-}" | sed 's/\//\\\//g')'"\);/g' defaults/pref/config.js
 
+# Set blacklisted domains
+perl -pi -e 's/pref\("translation-server.blacklistedDomains", "[^"]*"\);/pref\("translation-server.blacklistedDomains", "'$(echo "${BLACKLISTED_DOMAINS:-}")'"\);/g' defaults/pref/config.js
+
 # Enable automatic URL deproxification
 perl -pi -e 's/pref\("translation-server.deproxifyURLs", (true|false)\);/pref\("translation-server.deproxifyURLs", '$(echo "${DEPROXIFY_URLS:-}")'\);/g' defaults/pref/config.js
 
