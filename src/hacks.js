@@ -1,3 +1,7 @@
+if (!Zotero.getString) {
+	Zotero.getString = str => str;
+}
+
 Zotero.CookieSandbox.prototype._attachToInterfaceRequestor = Zotero.CookieSandbox.prototype.attachToInterfaceRequestor;
 /**
  * Replaces Zotero.CookieSandbox.prototype.attachToInterfaceRequestor to allow the cookieSandbox
