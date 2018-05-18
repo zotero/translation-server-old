@@ -25,6 +25,9 @@ perl -pi -e 's/pref\("translation-server.translators.CrossrefREST.email", "[^"]*
 # We have to escape the '//' in the URL.
 perl -pi -e 's/pref\("translation-server.identifierSearchURL", "[^"]*"\);/pref\("translation-server.identifierSearchURL", "'$(echo "${IDENTIFIER_SEARCH_URL:-}" | sed 's/\//\\\//g')'"\);/g' defaults/pref/config.js
 
+# Enable automatic URL deproxification
+perl -pi -e 's/pref\("translation-server.deproxifyURLs", (true|false)\);/pref\("translation-server.deproxifyURLs", '$(echo "${DEPROXIFY_URLS:-}")'\);/g' defaults/pref/config.js
+
 if [[ "`uname`" == CYGWIN* ]]; then
 	./xpcshell.exe -v 180 -mn app/init.js "$@"
 else

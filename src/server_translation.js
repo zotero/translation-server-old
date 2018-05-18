@@ -190,10 +190,10 @@ Zotero.Server.Translation.Web.prototype = {
 		}
 		
 		try {
-			var url = Services.io.newURI(data.url, "UTF-8", null);
-		} catch(e) {}
-		
-		if(!url || (!url.schemeIs("http") && !url.schemeIs("https"))) {
+			var nsIURL = Services.io.newURI(data.url, "UTF-8", null);
+		}
+		catch(e) {}
+		if (!nsIURL || (!nsIURL.schemeIs("http") && !nsIURL.schemeIs("https"))) {
 			sendResponseCallback(400, "text/plain", "Invalid URL specified\n");
 			return;
 		}
@@ -221,15 +221,24 @@ Zotero.Server.Translation.Web.prototype = {
 			return sendResponseCallback(...(await Zotero.Server.Translation.Search.prototype.init({data: doi})));
 		}
 		
-		var runningInstance
-		if((runningInstance = Zotero.Server.Translation.waitingForSelection[data.sessionid])
-				&& data.items) {
-			// Already waiting for a items response, so just pass this there
-			runningInstance._cookieSandbox.setTimeout(SERVER_TRANSLATION_TIMEOUT*1000,
-				runningInstance.timeout.bind(runningInstance));
-			runningInstance.sendResponse = sendResponseCallback;
-			runningInstance.selectDone(data.items);
-		} else {
+		var urlsToTry = Zotero.Prefs.get('deproxifyURLs') ? this.deproxifyURL(data.url) : [data.url];
+		for (let i = 0; i < urlsToTry.length; i++) {
+			let url = urlsToTry[i];
+			if (urlsToTry.length > 1) {
+				Zotero.debug("Trying " + url);
+			}
+			
+			let runningInstance;
+			if ((runningInstance = Zotero.Server.Translation.waitingForSelection[data.sessionid])
+					&& data.items) {
+				// Already waiting for a items response, so just pass this there
+				runningInstance._cookieSandbox.setTimeout(SERVER_TRANSLATION_TIMEOUT*1000,
+					runningInstance.timeout.bind(runningInstance));
+				runningInstance.sendResponse = sendResponseCallback;
+				runningInstance.selectDone(data.items);
+				break;
+			}
+			
 			// New request
 			this.sendResponse = sendResponseCallback;
 			this._data = data;
@@ -237,14 +246,14 @@ Zotero.Server.Translation.Web.prototype = {
 			this._cookieSandbox.setTimeout(SERVER_TRANSLATION_TIMEOUT*1000,
 				this.timeout.bind(this));
 			
-			var translate = this._translate = new Zotero.Translate.Web();
+			let translate = this._translate = new Zotero.Translate.Web();
 			translate.setHandler("translators", this.translators.bind(this));
 			translate.setHandler("select", this.select.bind(this));
 			translate.setCookieSandbox(this._cookieSandbox);
 			
 			try {
 				await Zotero.HTTP.processDocuments(
-					[url.spec],
+					[url],
 					(doc) => {
 						translate.setDocument(doc);
 						// This could be optimized by only running detect on secondary translators
@@ -253,6 +262,7 @@ Zotero.Server.Translation.Web.prototype = {
 					},
 					this._cookieSandbox
 				);
+				break;
 			}
 			catch (e) {
 				Zotero.debug(e, 1);
@@ -264,8 +274,10 @@ Zotero.Server.Translation.Web.prototype = {
 					return sendResponseCallback(...(await Zotero.Server.Translation.Search.prototype.init({data: doi})));
 				}
 				
-				Zotero.debug(e, 1);
-				sendResponseCallback(500, "text/plain", "An error occurred retrieving the document\n");
+				// No more URLs to try
+				if (i == urlsToTry.length - 1) {
+					sendResponseCallback(500, "text/plain", "An error occurred retrieving the document\n");
+				}
 			}
 		}
 		
@@ -362,6 +374,67 @@ Zotero.Server.Translation.Web.prototype = {
 		
 		this.sendResponse(200, "application/json", JSON.stringify(items));
 	},
+	
+	
+	/**
+	 * Try to determine whether the passed URL looks like a proxied URL based on TLDs in the
+	 * middle of the domain and return a list of likely URLs, starting with the longest domain
+	 * and ending with the original one
+	 *
+	 * E.g., https://www-example-co-uk.mutex.gmu.edu ->
+	 *
+	 * [
+	 *   'https://www.example.co.uk',
+	 *   'https://www.example.co',
+	 *   'https://www-example-co-uk.mutex.gmu.edu',
+	 * ]
+	 *
+	 * Based on Zotero.Proxies.getPotentialProxies()
+	 */
+	deproxifyURL: function (url) {
+		var urlToProxy = {
+			[url]: null
+		};
+		
+		// if there is a subdomain that is also a TLD, also test against URI with the domain
+		// dropped after the TLD
+		// (i.e., www.nature.com.mutex.gmu.edu => www.nature.com)
+		var m = /^(https?:\/\/)([^\/]+)/i.exec(url);
+		if (m) {
+			// First, drop the 0- if it exists (this is an III invention)
+			var host = m[2];
+			if (host.substr(0, 2) === "0-") host = host.substr(2);
+			var hostnameParts = [host.split(".")];
+			if (m[1] == 'https://') {
+				// try replacing hyphens with dots for https protocol
+				// to account for EZProxy HttpsHypens mode
+				hostnameParts.push(host.split('.'));
+				hostnameParts[1].splice(0, 1, ...(hostnameParts[1][0].replace(/-/g, '.').split('.')));
+			}
+			
+			for (let i=0; i < hostnameParts.length; i++) {
+				let parts = hostnameParts[i];
+				// If hostnameParts has two entries, then the second one is with replaced hyphens
+				let dotsToHyphens = i == 1;
+				// skip the lowest level subdomain, domain and TLD
+				for (let j=1; j<parts.length-2; j++) {
+					// if a part matches a TLD, everything up to it is probably the true URL
+					if (TLDS[parts[j].toLowerCase()]) {
+						var properHost = parts.slice(0, j+1).join(".");
+						// protocol + properHost + /path
+						var properURL = m[1]+properHost + url.substr(m[0].length);
+						var proxyHost = parts.slice(j + 1).join('.');
+						urlToProxy[properURL] = {scheme: '%h.' + proxyHost + '/%p', dotsToHyphens};
+					}
+				}
+			}
+		}
+		var urls = Object.keys(urlToProxy);
+		urls.sort((a, b) => b.length - a.length);
+		urls.push(urls.shift());
+		return urls;
+	},
+	
 	
 	/**
 	 * Called if multiple items are available for selection
