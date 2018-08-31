@@ -1,4 +1,6 @@
-# Zotero Translation Server
+# Zotero Translation Server v1
+
+⚠ **This version of translation-server has been discontinued. Use the [current version](https://github.com/zotero/translation-server) instead.** ⚠
 
 Server-side Zotero translation
 
@@ -21,9 +23,9 @@ To bind to a different port, change the first `1969` (e.g., `-p 8080:1969`).
 
 First, check out the source code and build an image:
 
-1. `git clone --recursive https://github.com/zotero/translation-server`
+1. `git clone --recursive https://github.com/zotero/translation-server-old translation-server-v1`
 
-1. `cd translation-server`
+1. `cd translation-server-v1`
 
 1. `docker build -t translation-server .`
 
@@ -55,11 +57,11 @@ When you’re done, ensure your changes are applied to `modules/zotero` and `mod
 
 ### Manually (unsupported)
 
-1. Install [required libraries](https://github.com/zotero/translation-server/blob/master/Dockerfile#L4) (e.g., by installing Firefox)
+1. Install [required libraries](https://github.com/zotero/translation-server-old/blob/master/Dockerfile#L4) (e.g., by installing Firefox)
 
-1. `git clone --recursive https://github.com/zotero/translation-server`
+1. `git clone --recursive https://github.com/zotero/translation-server-old translation-server-v1`
 
-1. `cd translation-server/modules/zotero/translators`
+1. `cd translation-server-v1/modules/zotero/translators`
 
 1. `git pull origin master`
 
@@ -136,5 +138,5 @@ Converts items in Zotero API JSON format to a supported export format (RIS, BibT
 
 * endpoint: `/export`
 * request method: `POST`
-* query parameter: `format`, which must be a [supported export format](https://github.com/zotero/translation-server/blob/master/src/server_translation.js#L31-43)
+* query parameter: `format`, which must be a [supported export format](https://github.com/zotero/translation-server-old/blob/master/src/server_translation.js#L31-43)
 * request body: An array of items in Zotero API JSON format
